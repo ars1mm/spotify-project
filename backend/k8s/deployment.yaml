@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotify-backend
+  labels:
+    app: spotify-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spotify-backend
+  template:
+    metadata:
+      labels:
+        app: spotify-backend
+    spec:
+      containers:
+      - name: spotify-backend
+        image: spotify-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: RAPIDAPI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: spotify-secrets
+              key: rapidapi-key
+        - name: RAPIDAPI_HOST
+          value: "spotify-scraper.p.rapidapi.com"
