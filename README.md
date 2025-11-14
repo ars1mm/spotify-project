@@ -6,7 +6,7 @@ Ky është një projekt për të ndërtuar një aplikacion të ngjashëm me Spot
 
 ```
 spotify-project/
-├── frontend/          # Aplikacioni frontend (React)
+├── frontend/          # Aplikacioni frontend (Next.js)
 ├── backend/           # Serveri backend (Python/FastAPI)
 ├── docs/              # Dokumentacioni dhe diagramet
 └── README.md          # Dokumentacioni kryesor
@@ -52,7 +52,7 @@ uvicorn main:app --reload
 2. Nisni aplikacionin frontend:
 ```bash
 cd frontend
-npm start
+npm run dev
 ```
 
 ## Karakteristikat
@@ -66,9 +66,11 @@ npm start
 ## Teknologjitë e Përdorura
 
 ### Frontend
-- React.js
-- CSS/SCSS
-- Axios për API calls
+- Next.js 13+ (App Router)
+- Chakra UI
+- TypeScript
+- Auth0 Next.js SDK
+- SWR për data fetching
 
 ### Backend
 - Python 3.8+

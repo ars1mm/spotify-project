@@ -4,81 +4,91 @@
 
 ```mermaid
 graph TB
-    subgraph "Frontend"
-        A[React App] --> B[Auth0 SDK]
-        A --> C[API Client]
+    subgraph "Frontend (Next.js)"
+        A[Next.js App] --> B[Auth0 Next.js SDK]
+        A --> C[SWR Client]
+        A --> D[Chakra UI Components]
+        E[API Routes] --> F[Server Actions]
     end
     
     subgraph "Authentication"
-        D[Auth0] --> E[JWT Tokens]
+        G[Auth0] --> H[JWT Tokens]
     end
     
     subgraph "Backend Services"
-        F[FastAPI Server] --> G[PostgreSQL]
-        F --> H[Redis Cache]
-        F --> I[Spotify API]
+        I[FastAPI Server] --> J[PostgreSQL]
+        I --> K[Redis Cache]
+        I --> L[Spotify API]
     end
     
     subgraph "Storage"
-        J[AWS S3] --> K[Audio Files]
-        J --> L[Cover Images]
+        M[AWS S3] --> N[Audio Files]
+        M --> O[Cover Images]
     end
     
-    B --> D
-    C --> F
-    F --> J
+    B --> G
+    C --> I
+    E --> I
+    I --> M
     
-    style A fill:#61dafb
-    style F fill:#009688
-    style D fill:#eb5424
-    style G fill:#336791
-    style H fill:#dc382d
+    style A fill:#000000
+    style I fill:#009688
+    style G fill:#eb5424
+    style J fill:#336791
+    style K fill:#dc382d
+    style D fill:#319795
 ```
 
 ## Diagrami i Komponentëve
 
 ```mermaid
 graph LR
-    subgraph "Client Layer"
-        A[Web Browser]
-        B[Mobile App]
+    subgraph "Frontend Layer"
+        A[Next.js Pages]
+        B[Chakra UI Components]
+        C[SWR Hooks]
+        D[Auth0 Provider]
     end
     
-    subgraph "API Gateway"
-        C[FastAPI Router]
-        D[Middleware]
-        E[Auth Validation]
+    subgraph "API Layer"
+        E[Next.js API Routes]
+        F[FastAPI Router]
+        G[Middleware]
+        H[Auth Validation]
     end
     
     subgraph "Business Logic"
-        F[User Service]
-        G[Music Service]
-        H[Playlist Service]
-        I[Search Service]
+        I[User Service]
+        J[Music Service]
+        K[Playlist Service]
+        L[Search Service]
     end
     
     subgraph "Data Layer"
-        J[(PostgreSQL)]
-        K[(Redis)]
-        L[Spotify API]
-        M[AWS S3]
+        M[(PostgreSQL)]
+        N[(Redis)]
+        O[Spotify API]
+        P[AWS S3]
     end
     
+    A --> B
     A --> C
-    B --> C
-    C --> D
-    D --> E
+    A --> D
+    C --> E
     E --> F
-    E --> G
-    E --> H
-    E --> I
-    
-    F --> J
-    G --> J
+    F --> G
+    G --> H
+    H --> I
     H --> J
-    I --> K
-    G --> L
-    G --> M
+    H --> K
+    H --> L
+    
+    I --> M
+    J --> M
+    K --> M
+    L --> N
+    J --> O
+    J --> P
 ```
 
 ## Rrjedha e Autentifikimit
@@ -163,12 +173,13 @@ erDiagram
 ## Teknologjitë e Përdorura
 
 ### Frontend Stack
-- **React 18** - UI Framework
+- **Next.js 13+** - React Framework (App Router)
 - **TypeScript** - Type Safety
-- **Tailwind CSS** - Styling
-- **Auth0 React SDK** - Authentication
-- **React Query** - State Management & Caching
-- **React Router** - Navigation
+- **Chakra UI** - Component Library
+- **Auth0 Next.js SDK** - Authentication
+- **SWR** - Data Fetching & Caching
+- **Framer Motion** - Animations
+- **React Hook Form** - Form Management
 
 ### Backend Stack
 - **Python 3.8+** - Programming Language
