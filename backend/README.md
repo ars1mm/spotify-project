@@ -39,9 +39,19 @@ uvicorn app.main:app --reload
 # Quick start (Linux/Mac)
 ./scripts/run-docker.sh
 
-# Manual
+# Manual (with rate limiting in memory)
 docker build -t spotify-backend .
-docker run -p 8000:8000 spotify-backend
+docker run --name spotify-backend -p 8000:8000 spotify-backend
+
+# With Redis for persistent rate limiting
+docker run -d --name redis redis:7-alpine
+docker run --name spotify-backend --link redis -e REDIS_URL=redis://redis:6379 -p 8000:8000 spotify-backend
+
+# To stop and remove container
+docker stop spotify-backend
+docker rm spotify-backend
+docker build -t spotify-backend .
+docker run --name spotify-backend -p 127.0.0.1:8000:8000 spotify-backend
 ```
 
 ### Kubernetes

@@ -5,7 +5,7 @@ metadata:
   labels:
     app: spotify-backend
 spec:
-  replicas: 2
+  replicas: 5
   selector:
     matchLabels:
       app: spotify-backend
@@ -27,3 +27,5 @@ spec:
               key: rapidapi-key
         - name: RAPIDAPI_HOST
           value: "spotify-scraper.p.rapidapi.com"
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"

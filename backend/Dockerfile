@@ -2,10 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Copy and install dependencies first (cached layer)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy application code (separate layer)
+COPY app/ ./app/
+COPY .env* ./
 
 EXPOSE 8000
 
