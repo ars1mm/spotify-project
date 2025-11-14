@@ -78,7 +78,7 @@ graph TD
     FE -->|Sends JWT| BE[Backend API]
     BE -->|Fetch user preferences| DB[(Database)]
     BE -->|Request trending songs by genre| SPOTIFY[Spotify API]
-    SPOTIFY -->|Trending songs (previews and metadata)| BE
+    SPOTIFY -->|Trending songs| BE
     BE -->|Personalized song list| FE
     FE -->|Display songs| U
 
