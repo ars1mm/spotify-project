@@ -1,6 +1,6 @@
 # Projekti Spotify
 
-Ky është një projekt për të ndërtuar një aplikacion të ngjashëm me Spotify.
+Ky projekt, si pjesë e detyrës së kursit, synon ndërtimin e një aplikacioni të ngjashëm me Spotify me Next.js në frontend, Python në backend, PostgreSQL si bazë të dhënash, Auth0 për autentikim dhe Supabase Bucket për ruajtjen e skedarëve audio, duke demonstruar arkitekturë dhe praktika moderne zhvillimi.
 
 ## Struktura e Projektit
 
