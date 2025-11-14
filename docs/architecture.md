@@ -3,6 +3,7 @@
 ## Përmbledhje e Arkitekturës
 
 ```mermaid
+%%{init: { 'theme': 'dark', 'themeVariables': { 'background': '#000000' } } }%%
 graph TB
     subgraph "Frontend (Next.js)"
         A[Next.js App] --> B[Auth0 Next.js SDK]
@@ -10,27 +11,27 @@ graph TB
         A --> D[Chakra UI Components]
         E[API Routes] --> F[Server Actions]
     end
-    
+
     subgraph "Authentication"
         G[Auth0] --> H[JWT Tokens]
     end
-    
+
     subgraph "Backend Services"
         I[FastAPI Server] --> J[PostgreSQL]
         I --> K[Redis Cache]
         I --> L[Spotify API]
     end
-    
+
     subgraph "Storage"
-        M[AWS S3] --> N[Audio Files]
+        M[Supabase S3 Bucket] --> N[Audio Files]
         M --> O[Cover Images]
     end
-    
+
     B --> G
     C --> I
     E --> I
     I --> M
-    
+
     style A fill:#000000
     style I fill:#009688
     style G fill:#eb5424
@@ -42,6 +43,7 @@ graph TB
 ## Diagrami i Komponentëve
 
 ```mermaid
+%%{init: { 'theme': 'dark', 'themeVariables': { 'background': '#000000' } } }%%
 graph LR
     subgraph "Frontend Layer"
         A[Next.js Pages]
@@ -49,28 +51,28 @@ graph LR
         C[SWR Hooks]
         D[Auth0 Provider]
     end
-    
+
     subgraph "API Layer"
         E[Next.js API Routes]
         F[FastAPI Router]
         G[Middleware]
         H[Auth Validation]
     end
-    
+
     subgraph "Business Logic"
         I[User Service]
         J[Music Service]
         K[Playlist Service]
         L[Search Service]
     end
-    
+
     subgraph "Data Layer"
         M[(PostgreSQL)]
         N[(Redis)]
         O[Spotify API]
-        P[AWS S3]
+        P[Supabase S3 Bucket]
     end
-    
+
     A --> B
     A --> C
     A --> D
@@ -82,7 +84,7 @@ graph LR
     H --> J
     H --> K
     H --> L
-    
+
     I --> M
     J --> M
     K --> M
@@ -100,7 +102,7 @@ sequenceDiagram
     participant A as Auth0
     participant B as Backend
     participant D as Database
-    
+
     U->>F: Login Request
     F->>A: Redirect to Auth0
     A->>U: Login Form
@@ -128,7 +130,7 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
-    
+
     PLAYLISTS {
         uuid id PK
         uuid user_id FK
@@ -138,7 +140,7 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
-    
+
     SONGS {
         uuid id PK
         string spotify_id UK
@@ -149,20 +151,20 @@ erDiagram
         string preview_url
         string image_url
     }
-    
+
     PLAYLIST_SONGS {
         uuid playlist_id FK
         uuid song_id FK
         integer position
         timestamp added_at
     }
-    
+
     USER_FAVORITES {
         uuid user_id FK
         uuid song_id FK
         timestamp created_at
     }
-    
+
     USERS ||--o{ PLAYLISTS : creates
     PLAYLISTS ||--o{ PLAYLIST_SONGS : contains
     SONGS ||--o{ PLAYLIST_SONGS : included_in
@@ -173,6 +175,7 @@ erDiagram
 ## Teknologjitë e Përdorura
 
 ### Frontend Stack
+
 - **Next.js 13+** - React Framework (App Router)
 - **TypeScript** - Type Safety
 - **Chakra UI** - Component Library
@@ -182,6 +185,7 @@ erDiagram
 - **React Hook Form** - Form Management
 
 ### Backend Stack
+
 - **Python 3.8+** - Programming Language
 - **FastAPI** - Web Framework
 - **SQLAlchemy** - ORM
@@ -190,13 +194,15 @@ erDiagram
 - **python-jose** - JWT Handling
 
 ### Infrastructure
+
 - **PostgreSQL** - Primary Database
 - **Redis** - Caching & Sessions
-- **AWS S3** - File Storage
+- **Supabase S3 Bucket** - File Storage
 - **Auth0** - Authentication Service
 - **Spotify Web API** - Music Metadata
 
 ### Development Tools
+
 - **Docker** - Containerization
 - **pytest** - Testing Framework
 - **Black** - Code Formatting
