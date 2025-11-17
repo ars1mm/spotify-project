@@ -5,3 +5,6 @@ requests
 pydantic
 slowapi
 redis
+supabase
+boto3
+python-multipart
