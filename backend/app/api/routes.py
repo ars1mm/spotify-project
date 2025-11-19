@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 from app.services.spotify_service import SpotifyService
 from app.services.supabase_service import SupabaseService
 from app.schemas.track import TrackDownloadResponse
@@ -33,3 +34,101 @@ def download_track(request: Request, track: str):
         return TrackDownloadResponse(data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/trending/songs", tags=["trending"])
+def get_trending_songs(limit: int = 10):
+    """
+    Get trending songs
+    - **limit**: Number of trending songs to return (default 10)
+    """
+    result = supabase_service.get_trending_songs(limit=limit)
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
+
+@router.get("/trending/albums", tags=["trending"])
+def get_trending_albums(limit: int = 10):
+    """
+    Get trending albums
+    - **limit**: Number of trending albums to return (default 10)
+    """
+    result = supabase_service.get_trending_albums(limit=limit)
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+class UpdatePasswordRequest(BaseModel):
+    access_token: str
+    new_password: str
+
+@router.post("/auth/signup", tags=["auth"])
+def signup_user(request: SignupRequest):
+    """
+    Create a new user account
+    - **email**: User email address
+    - **password**: User password
+    - **name**: User display name
+    """
+    result = supabase_service.create_user(email=request.email, password=request.password, name=request.name)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.post("/auth/login", tags=["auth"])
+def login_user(request: LoginRequest):
+    """
+    Login user
+    - **email**: User email address
+    - **password**: User password
+    """
+    result = supabase_service.login_user(email=request.email, password=request.password)
+    if result.get("error"):
+        raise HTTPException(status_code=401, detail=result["error"])
+    return result
+
+@router.post("/auth/reset-password", tags=["auth"])
+def reset_password(request: ResetPasswordRequest):
+    """
+    Send password reset email
+    - **email**: User email address
+    """
+    result = supabase_service.reset_password(email=request.email)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.post("/auth/update-password", tags=["auth"])
+def update_password(request: UpdatePasswordRequest):
+    """
+    Update user password with access token
+    - **access_token**: Access token from reset email
+    - **new_password**: New password
+    """
+    result = supabase_service.update_password(access_token=request.access_token, new_password=request.new_password)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.get("/search", tags=["search"])
+def search_songs(q: str, limit: int = 10):
+    """
+    Search for songs
+    - **q**: Search query
+    - **limit**: Number of results to return (default 10)
+    """
+    result = supabase_service.search_songs(query=q, limit=limit)
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
