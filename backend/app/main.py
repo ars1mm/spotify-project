@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
+from app.api.admin import router as admin_router
 from app.core.config import settings
 from app.core.rate_limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -26,6 +27,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 
 @app.get("/", tags=["health"])
 @limiter.limit("60/30seconds")

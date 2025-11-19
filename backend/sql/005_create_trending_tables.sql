@@ -1,7 +1,7 @@
 -- Create trending_songs table
 CREATE TABLE IF NOT EXISTS trending_songs (
     id SERIAL PRIMARY KEY,
-    song_id INTEGER REFERENCES songs(id) ON DELETE CASCADE,
+    song_id UUID REFERENCES songs(id) ON DELETE CASCADE,
     rank_position INTEGER NOT NULL,
     trend_score DECIMAL(10,2) DEFAULT 0.0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
