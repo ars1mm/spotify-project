@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (separate layer)
 COPY app/ ./app/
-COPY .env* ./
+COPY .env .
 
 EXPOSE 8000
 

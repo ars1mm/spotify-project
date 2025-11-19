@@ -16,7 +16,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.include_router(router, prefix="/api/v1", tags=["tracks"])
+app.include_router(router, prefix="/api/v1")
 
 @app.get("/", tags=["health"])
 @limiter.limit("60/30seconds")

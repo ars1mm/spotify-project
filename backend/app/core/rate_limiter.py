@@ -4,8 +4,22 @@ from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 import os
 
-# Use memory storage for Docker, Redis for Kubernetes
-storage_uri = os.getenv("REDIS_URL", "memory://")
+# Try Redis first, fallback to memory storage
+try:
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        # Test Redis connection
+        import redis
+        r = redis.from_url(redis_url)
+        r.ping()  # Test connection
+        storage_uri = redis_url
+        print(f"Using Redis for rate limiting: {redis_url}")
+    else:
+        storage_uri = "memory://"
+        print("Using memory storage for rate limiting")
+except Exception as e:
+    print(f"Redis connection failed: {e}. Using memory storage for rate limiting")
+    storage_uri = "memory://"
 
 limiter = Limiter(
     key_func=get_remote_address,

@@ -2,7 +2,7 @@
 """Test client for Supabase bucket song fetching"""
 
 import asyncio
-from supabase_client import SupabaseStorageClient
+from app.utils.supabase_client import SupabaseStorageClient
 from dotenv import load_dotenv
 
 async def test_fetch_songs():
