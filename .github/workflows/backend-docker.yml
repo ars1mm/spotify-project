@@ -1,9 +1,7 @@
 name: Backend Docker Build Test
 
 on:
-  push:
-  pull_request:
-    branches: [ production, production-test, local-development ]
+  workflow_dispatch:
 
 jobs:
   backend-docker:
