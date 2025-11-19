@@ -8,8 +8,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (separate layer)
 COPY app/ ./app/
-COPY .env .
 
-EXPOSE 8000
+# Copy .env if it exists (optional for production)
+COPY .env* ./
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Environment variables for configuration
+ENV HOST=0.0.0.0
+ENV PORT=8000
+ENV LOG_LEVEL=info
+
+EXPOSE ${PORT}
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info", "--access-log"]
