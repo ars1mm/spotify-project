@@ -7,11 +7,85 @@ class AdminService:
     def __init__(self):
         self.supabase = get_supabase_client()
 
+    # Artist Management
+    def create_artist(self, name: str, bio: str = None, image_url: str = None) -> Dict[str, Any]:
+        """Create or get existing artist"""
+        try:
+            # Check if artist exists
+            existing = self.supabase.table('artists').select('*').eq('name', name).execute()
+            if existing.data:
+                return {"success": True, "data": existing.data[0], "created": False}
+            
+            # Create new artist
+            artist_data = {"name": name}
+            if bio:
+                artist_data["bio"] = bio
+            if image_url:
+                artist_data["image_url"] = image_url
+                
+            result = self.supabase.table('artists').insert(artist_data).execute()
+            return {"success": True, "data": result.data[0], "created": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def create_album(self, title: str, artist_id: str, cover_image_url: str = None, release_date: str = None) -> Dict[str, Any]:
+        """Create or get existing album"""
+        try:
+            # Check if album exists
+            existing = self.supabase.table('albums').select('*').eq('title', title).eq('artist_id', artist_id).execute()
+            if existing.data:
+                return {"success": True, "data": existing.data[0], "created": False}
+            
+            # Create new album
+            album_data = {"title": title, "artist_id": artist_id}
+            if cover_image_url:
+                album_data["cover_image_url"] = cover_image_url
+            if release_date:
+                album_data["release_date"] = release_date
+                
+            result = self.supabase.table('albums').insert(album_data).execute()
+            return {"success": True, "data": result.data[0], "created": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     # Song Management
     def bulk_insert_songs(self, songs_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Bulk insert songs with validation"""
+        """Bulk insert songs with artist/album creation"""
         try:
-            result = self.supabase.table('songs').insert(songs_data).execute()
+            processed_songs = []
+            for song in songs_data:
+                # Create/get artist
+                artist_result = self.create_artist(song.get('artist_name', song.get('artist')))
+                if not artist_result["success"]:
+                    continue
+                    
+                artist_id = artist_result["data"]["id"]
+                
+                # Create/get album if provided
+                album_id = None
+                if song.get('album_name', song.get('album')):
+                    album_result = self.create_album(
+                        song.get('album_name', song.get('album')), 
+                        artist_id,
+                        song.get('album_cover_url')
+                    )
+                    if album_result["success"]:
+                        album_id = album_result["data"]["id"]
+                
+                # Prepare song data
+                song_data = {
+                    "title": song["title"],
+                    "artist_id": artist_id,
+                    "duration_seconds": song.get("duration_seconds"),
+                    "file_path": song.get("file_path"),
+                    "cover_image_url": song.get("cover_image_url")
+                }
+                if album_id:
+                    song_data["album_id"] = album_id
+                    
+                processed_songs.append(song_data)
+            
+            result = self.supabase.table('songs').insert(processed_songs).execute()
             return {"success": True, "data": result.data, "count": len(result.data)}
         except Exception as e:
             return {"success": False, "error": str(e)}

@@ -7,10 +7,10 @@ import os
 # Try Redis first, fallback to memory storage
 try:
     redis_url = os.getenv("REDIS_URL")
-    if redis_url:
-        # Test Redis connection
+    if redis_url and not redis_url.startswith("redis://localhost"):
+        # Test Redis connection only for non-localhost URLs
         import redis
-        r = redis.from_url(redis_url)
+        r = redis.from_url(redis_url, socket_connect_timeout=5)
         r.ping()  # Test connection
         storage_uri = redis_url
         print(f"Using Redis for rate limiting: {redis_url}")
