@@ -6,20 +6,19 @@
 %%{init: { 'theme': 'dark', 'themeVariables': { 'background': '#000000' } } }%%
 graph TB
     subgraph "Frontend (Next.js)"
-        A[Next.js App] --> B[Auth0 Next.js SDK]
+        A[Next.js App] --> B[Supabase Auth Client]
         A --> C[SWR Client]
         A --> D[Chakra UI Components]
         E[API Routes] --> F[Server Actions]
     end
 
     subgraph "Authentication"
-        G[Auth0] --> H[JWT Tokens]
+        G[Supabase Auth] --> H[JWT Tokens]
     end
 
     subgraph "Backend Services"
         I[FastAPI Server] --> J[PostgreSQL]
         I --> K[Redis Cache]
-        I --> L[Spotify API]
     end
 
     subgraph "Storage"
@@ -34,7 +33,7 @@ graph TB
 
     style A fill:#000000
     style I fill:#009688
-    style G fill:#eb5424
+    style G fill:#3ECF8E
     style J fill:#336791
     style K fill:#dc382d
     style D fill:#319795
@@ -49,7 +48,7 @@ graph LR
         A[Next.js Pages]
         B[Chakra UI Components]
         C[SWR Hooks]
-        D[Auth0 Provider]
+        D[Supabase Auth Client]
     end
 
     subgraph "API Layer"
@@ -69,7 +68,6 @@ graph LR
     subgraph "Data Layer"
         M[(PostgreSQL)]
         N[(Redis)]
-        O[Spotify API]
         P[Supabase S3 Bucket]
     end
 
@@ -89,7 +87,6 @@ graph LR
     J --> M
     K --> M
     L --> N
-    J --> O
     J --> P
 ```
 
@@ -99,18 +96,16 @@ graph LR
 sequenceDiagram
     participant U as User
     participant F as Frontend
-    participant A as Auth0
+    participant S as Supabase Auth
     participant B as Backend
     participant D as Database
 
-    U->>F: Login Request
-    F->>A: Redirect to Auth0
-    A->>U: Login Form
-    U->>A: Credentials
-    A->>F: JWT Token
+    U->>F: Login/Register Request
+    F->>S: Supabase Auth API
+    S->>U: Auth Response (JWT)
     F->>B: API Request + JWT
-    B->>A: Validate Token
-    A->>B: Token Valid
+    B->>S: Validate Token
+    S->>B: Token Valid
     B->>D: Query Data
     D->>B: Return Data
     B->>F: API Response
@@ -123,7 +118,7 @@ sequenceDiagram
 erDiagram
     USERS {
         uuid id PK
-        string auth0_id UK
+        string supabase_id UK
         string email
         string username
         string display_name
@@ -143,12 +138,11 @@ erDiagram
 
     SONGS {
         uuid id PK
-        string spotify_id UK
         string title
         string artist
         string album
         integer duration_ms
-        string preview_url
+        string audio_url
         string image_url
     }
 
@@ -179,7 +173,7 @@ erDiagram
 - **Next.js 13+** - React Framework (App Router)
 - **TypeScript** - Type Safety
 - **Chakra UI** - Component Library
-- **Auth0 Next.js SDK** - Authentication
+- **Supabase JS Client** - Authentication & API
 - **SWR** - Data Fetching & Caching
 - **Framer Motion** - Animations
 - **React Hook Form** - Form Management
@@ -191,15 +185,13 @@ erDiagram
 - **SQLAlchemy** - ORM
 - **Alembic** - Database Migrations
 - **Pydantic** - Data Validation
-- **python-jose** - JWT Handling
+- **Supabase Python Client** - Auth & Storage
 
 ### Infrastructure
 
 - **PostgreSQL** - Primary Database
 - **Redis** - Caching & Sessions
-- **Supabase S3 Bucket** - File Storage
-- **Auth0** - Authentication Service
-- **Spotify Web API** - Music Metadata
+- **Supabase** - Auth, File Storage (S3 Bucket), and API
 
 ### Development Tools
 
