@@ -121,25 +121,25 @@ Ky projekt është i licensuar nën MIT License.
 
 Për të ekzekutuar backend-in, duhet të krijoni një skedar `.env` brenda dosjes `backend/` me këto variabla. Shembullin e plotë e gjeni te `backend/.env`.
 
-| Emri i Variablës           | Përshkrimi |
-|----------------------------|------------|
-| `DATABASE_URL`             | PostgreSQL connection string për bazën e të dhënave kryesore |
-| `REDIS_URL`                | Redis connection URL për caching dhe sesione |
-| `SUPABASE_URL`             | URL e projektit tuaj Supabase |
-| `SUPABASE_ANON_KEY`        | Supabase public API key (përdoret për auth dhe operacione klienti) |
-| `SUPABASE_SERVICE_ROLE_KEY`| Supabase service role key (admin access, mbajeni shumë të sigurtë!) |
-| `SUPABASE_BUCKET_NAME`     | Emri i bucket-it në Supabase për ruajtjen e këngëve |
-| `JWT_SECRET_KEY`           | Çelës sekret për nënshkrimin e JWT (mund të përdoret për tokens custom) |
-| `JWT_ALGORITHM`            | Algoritmi për nënshkrimin e JWT (zakonisht HS256) |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Sa minuta është valid një access token JWT |
-| `APP_ENV`                  | Ambienti i aplikacionit (`development`, `production`, etj.) |
-| `DEBUG`                    | Aktivizon debug mode (`True` ose `False`) |
-| `SECRET_KEY`               | Çelës sekret për operacione të ndryshme kriptografike në aplikacion |
-| `LOG_LEVEL`                | Niveli i logimit (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `SMTP_SERVER`              | (Opsionale) SMTP server për dërgim email-esh |
-| `SMTP_PORT`                | (Opsionale) Porti SMTP |
-| `SMTP_USERNAME`            | (Opsionale) Email për autentikim SMTP |
-| `SMTP_PASSWORD`            | (Opsionale) Fjalëkalimi për SMTP |
+| Emri i Variablës                  | Përshkrimi                                                              |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`                    | PostgreSQL connection string për bazën e të dhënave kryesore            |
+| `REDIS_URL`                       | Redis connection URL për caching dhe sesione                            |
+| `SUPABASE_URL`                    | URL e projektit tuaj Supabase                                           |
+| `SUPABASE_ANON_KEY`               | Supabase public API key (përdoret për auth dhe operacione klienti)      |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Supabase service role key (admin access, mbajeni shumë të sigurtë!)     |
+| `SUPABASE_BUCKET_NAME`            | Emri i bucket-it në Supabase për ruajtjen e këngëve                     |
+| `JWT_SECRET_KEY`                  | Çelës sekret për nënshkrimin e JWT (mund të përdoret për tokens custom) |
+| `JWT_ALGORITHM`                   | Algoritmi për nënshkrimin e JWT (zakonisht HS256)                       |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Sa minuta është valid një access token JWT                              |
+| `APP_ENV`                         | Ambienti i aplikacionit (`development`, `production`, etj.)             |
+| `DEBUG`                           | Aktivizon debug mode (`True` ose `False`)                               |
+| `SECRET_KEY`                      | Çelës sekret për operacione të ndryshme kriptografike në aplikacion     |
+| `LOG_LEVEL`                       | Niveli i logimit (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                  |
+| `SMTP_SERVER`                     | (Opsionale) SMTP server për dërgim email-esh                            |
+| `SMTP_PORT`                       | (Opsionale) Porti SMTP                                                  |
+| `SMTP_USERNAME`                   | (Opsionale) Email për autentikim SMTP                                   |
+| `SMTP_PASSWORD`                   | (Opsionale) Fjalëkalimi për SMTP                                        |
 
 **Shembull i shpejtë:**
 
@@ -162,6 +162,7 @@ LOG_LEVEL=INFO
 # SMTP_USERNAME=your-email@gmail.com
 # SMTP_PASSWORD=your-app-password
 ```
+
 ## Kontakti
 
 Për pyetje ose sugjerime, kontaktoni në: [email@example.com]
