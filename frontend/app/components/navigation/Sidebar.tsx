@@ -2,9 +2,12 @@
 
 import { Box, VStack, Text } from '@chakra-ui/react';
 import { NavItem } from './NavItem';
+import { useSearch } from '../../contexts/SearchContext';
 import { FiHome, FiSearch, FiMusic, FiPlus, FiHeart } from 'react-icons/fi';
 
 export function Sidebar() {
+  const { toggleSearch } = useSearch();
+
   return (
     <Box
       w="240px"
@@ -20,8 +23,8 @@ export function Sidebar() {
         </Text>
         
         <VStack align="start" spacing={4} w="full">
-          <NavItem icon={FiHome} label="Home" />
-          <NavItem icon={FiSearch} label="Search" />
+          <NavItem icon={FiHome} label="Home" href="/" />
+          <NavItem icon={FiSearch} label="Search" onClick={toggleSearch} />
           <NavItem icon={FiMusic} label="Your Library" />
         </VStack>
 
