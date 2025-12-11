@@ -26,7 +26,9 @@ export async function apiRequest(endpoint: string, options?: RequestInit) {
 
     return await response.json();
   } catch (error) {
-    console.error('API Request failed:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Request failed:', error);
+    }
     throw error;
   }
 }

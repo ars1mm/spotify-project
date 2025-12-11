@@ -52,7 +52,9 @@ export function MainContent() {
       const response = await apiRequest(`/api/v1/search?q=${encodeURIComponent(query)}`);
       setSearchResults(response.songs || []);
     } catch (error) {
-      console.error('Search failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Search failed:', error);
+      }
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
