@@ -127,7 +127,7 @@ export default function AdminDashboard() {
     setSongs(songs.filter((song) => song.id !== id))
   }
 
-  const updateSong = (id: string, field: keyof Song, value: any) => {
+  const updateSong = (id: string, field: keyof Song, value: string | File | string[]) => {
     setSongs(
       songs.map((song) => (song.id === id ? { ...song, [field]: value } : song))
     )
@@ -242,10 +242,11 @@ export default function AdminDashboard() {
         await uploadSong(song)
         addLog(`✓ Success: ${song.title}`)
         successCount++
-      } catch (error: any) {
-        addLog(`✗ Failed: ${song.title} - ${error.message}`)
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        addLog(`✗ Failed: ${song.title} - ${errorMessage}`)
         failCount++
-        errors.push(`${song.title}: ${error.message}`)
+        errors.push(`${song.title}: ${errorMessage}`)
       }
     }
 
@@ -310,7 +311,7 @@ export default function AdminDashboard() {
             <Text fontWeight="500" mb={2}>Genres</Text>
             <VStack align="start" gap={1} maxH="300px" overflowY="auto">
               {GENRES.map((genre) => (
-                <HStack key={genre} spacing={2}>
+                <HStack key={genre} gap={2}>
                   <input
                     type="checkbox"
                     checked={globalGenres.includes(genre)}
@@ -483,11 +484,11 @@ export default function AdminDashboard() {
         {/* Upload Button */}
         <Button
           onClick={handleUpload}
-          isLoading={loading}
-          loadingText="Uploading..."
+          disabled={loading}
           colorScheme="blue"
           size="lg"
         >
+          {loading ? 'Uploading...' : ''}
           Upload {activeTab === 'bulk' ? `${songs.filter((s) => s.title && s.artist && s.audioFile).length} Song(s)` : 'Song'}
         </Button>
         </VStack>
