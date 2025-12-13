@@ -1,10 +1,11 @@
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
 WORKDIR /app
 
 # Copy and install dependencies first (cached layer)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 
 # Copy application code (separate layer)
 COPY app/ ./app/
