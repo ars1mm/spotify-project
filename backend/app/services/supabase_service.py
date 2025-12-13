@@ -28,3 +28,9 @@ class SupabaseService:
     
     def search_songs(self, query: str, limit: int = 10):
         return self.client.search_songs(query=query, limit=limit)
+
+    def upload_file(self, file_content: bytes, file_path: str, content_type: str):
+        return self.client.upload_file(file_content, file_path, content_type)
+
+    def insert_song(self, song_data: dict):
+        return self.client.insert_song(song_data)

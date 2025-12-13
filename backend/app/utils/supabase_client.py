@@ -196,3 +196,27 @@ class SupabaseStorageClient:
             return {"songs": songs, "total": len(songs)}
         except Exception as e:
             return {"error": str(e), "songs": [], "total": 0}
+
+    def upload_file(self, file_content: bytes, file_path: str, content_type: str) -> str:
+        """Upload file to Supabase Storage"""
+        try:
+            self.supabase.storage.from_(self.bucket_name).upload(
+                path=file_path,
+                file=file_content,
+                file_options={"content-type": content_type, "upsert": "true"}
+            )
+            return file_path
+        except Exception as e:
+            print(f"Upload error: {str(e)}")
+            raise e
+
+    def insert_song(self, song_data: dict) -> dict:
+        """Insert song metadata into database"""
+        try:
+            response = self.supabase.table("songs").insert(song_data).execute()
+            if response.data:
+                return response.data[0]
+            return {"error": "No data returned after insert"}
+        except Exception as e:
+            print(f"Insert error: {str(e)}")
+            raise e
