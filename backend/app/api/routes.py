@@ -71,6 +71,7 @@ class ResetPasswordRequest(BaseModel):
 
 class UpdatePasswordRequest(BaseModel):
     access_token: str
+    refresh_token: str = ""
     new_password: str
 
 @router.post("/auth/signup", tags=["auth"])
@@ -114,9 +115,10 @@ def update_password(request: UpdatePasswordRequest):
     """
     Update user password with access token
     - **access_token**: Access token from reset email
+    - **refresh_token**: Refresh token from reset email (optional)
     - **new_password**: New password
     """
-    result = supabase_service.update_password(access_token=request.access_token, new_password=request.new_password)
+    result = supabase_service.update_password(access_token=request.access_token, refresh_token=request.refresh_token, new_password=request.new_password)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -133,53 +135,5 @@ def search_songs(q: str, limit: int = 10):
         raise HTTPException(status_code=500, detail=result["error"])
     return result
 
-import base64
-import uuid
-from app.schemas.upload import SongUploadRequest
-
-@router.post("/upload_song", tags=["songs"])
-def upload_song(request: SongUploadRequest):
-    """
-    Upload a new song
-    - **request**: Base64 encoded song data
-    """
-    try:
-        # Helper to decode base64
-        def decode_str(b64_str: str) -> str:
-            if not b64_str: return None
-            return base64.b64decode(b64_str).decode('utf-8')
-        
-        title = decode_str(request.title)
-        artist = decode_str(request.artist)
-        album = decode_str(request.album)
-        cover_image_url = decode_str(request.cover_image)
-        file_name = decode_str(request.file_name)
-        content_type = decode_str(request.content_type)
-        
-        # Decode file content (bytes)
-        file_content = base64.b64decode(request.file_content)
-        
-        # Generate storage path: artist/album/filename (sanitized) or just distinct UUID
-        # Using UUID to avoid collisions
-        file_path = f"{uuid.uuid4()}-{file_name}"
-        
-        # 1. Upload file to Storage
-        uploaded_path = supabase_service.upload_file(file_content, file_path, content_type)
-        
-        # 2. Insert metadata to Database
-        song_data = {
-            "title": title,
-            "artist": artist,
-            "album": album,
-            "cover_image_url": cover_image_url,
-            "file_path": uploaded_path,
-            "duration_seconds": 0 # You might want to extract this from the file if possible, or pass it in request
-        }
-        
-        result = supabase_service.insert_song(song_data)
-        return {"success": True, "data": result}
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+# Upload endpoint moved to admin routes (/api/v1/admin/songs/upload)
+# This ensures only authenticated admins can upload songs

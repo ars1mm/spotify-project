@@ -2,8 +2,8 @@ import os
 from app.utils.supabase_client import SupabaseStorageClient
 
 class SupabaseService:
-    def __init__(self):
-        self.client = SupabaseStorageClient()
+    def __init__(self, use_service_role: bool = False):
+        self.client = SupabaseStorageClient(use_service_role=use_service_role)
 
     def list_songs(self, page: int = 1, limit: int = 50):
         return self.client.list_songs(page=page, limit=limit)
@@ -23,8 +23,8 @@ class SupabaseService:
     def reset_password(self, email: str):
         return self.client.reset_password(email=email)
     
-    def update_password(self, access_token: str, new_password: str):
-        return self.client.update_password(access_token=access_token, new_password=new_password)
+    def update_password(self, access_token: str, refresh_token: str, new_password: str):
+        return self.client.update_password(access_token=access_token, refresh_token=refresh_token, new_password=new_password)
     
     def search_songs(self, query: str, limit: int = 10):
         return self.client.search_songs(query=query, limit=limit)

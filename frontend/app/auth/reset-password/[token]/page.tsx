@@ -1,70 +1,93 @@
-'use client';
+'use client'
 
-import { Box, VStack, Text, Input, Button } from '@chakra-ui/react';
-import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { Box, VStack, Text, Input, Button } from '@chakra-ui/react'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 
 export default function ResetPasswordWithToken() {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const params = useParams();
-  const token = params.token as string;
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const token = params.token as string
+  const refreshToken = searchParams.get('refresh') || ''
 
   const handleResetPassword = async () => {
     if (!password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return;
+      setError('Please fill in all fields')
+      return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+      setError('Passwords do not match')
+      return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+      setError('Password must be at least 6 characters')
+      return
     }
 
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError('')
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/auth/update-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: token, new_password: password })
-      });
-      
-      const result = await response.json();
-      
+      const response = await fetch(
+        'http://127.0.0.1:8000/api/v1/auth/update-password',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: token,
+            refresh_token: refreshToken,
+            new_password: password,
+          }),
+        }
+      )
+
+      const result = await response.json()
+
       if (result.success) {
-        alert('Password updated successfully!');
-        router.push('/auth/login');
+        alert('Password updated successfully!')
+        router.push('/auth/login')
       } else {
-        setError(result.error || 'Failed to update password');
+        setError(result.error || 'Failed to update password')
       }
     } catch (err) {
-      setError('Failed to update password. Please try again.');
+      setError('Failed to update password. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <Box bg="#121212" minH="100vh" display="flex" alignItems="center" justifyContent="center">
+    <Box
+      bg="#121212"
+      minH="100vh"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
       <Box bg="black" p={12} borderRadius="8px" w="448px" maxW="90vw">
         <VStack gap={6} align="stretch">
-          <Text fontSize="48px" fontWeight="700" color="white" textAlign="center" mb={4}>
+          <Text
+            fontSize="48px"
+            fontWeight="700"
+            color="white"
+            textAlign="center"
+            mb={4}
+          >
             Reset your password
           </Text>
-          
+
           <VStack gap={4} align="stretch">
             <Box>
-              <Text color="white" fontWeight="700" mb={2}>New password</Text>
+              <Text color="white" fontWeight="700" mb={2}>
+                New password
+              </Text>
               <Input
                 type="password"
                 placeholder="Enter new password"
@@ -79,9 +102,11 @@ export default function ResetPasswordWithToken() {
                 _focus={{ borderColor: 'white', boxShadow: 'none' }}
               />
             </Box>
-            
+
             <Box>
-              <Text color="white" fontWeight="700" mb={2}>Confirm new password</Text>
+              <Text color="white" fontWeight="700" mb={2}>
+                Confirm new password
+              </Text>
               <Input
                 type="password"
                 placeholder="Confirm new password"
@@ -97,13 +122,13 @@ export default function ResetPasswordWithToken() {
               />
             </Box>
           </VStack>
-          
+
           {error && (
             <Box bg="red.900" color="white" p={3} borderRadius="md">
               {error}
             </Box>
           )}
-          
+
           <Button
             onClick={handleResetPassword}
             loading={loading}
@@ -124,5 +149,5 @@ export default function ResetPasswordWithToken() {
         </VStack>
       </Box>
     </Box>
-  );
+  )
 }

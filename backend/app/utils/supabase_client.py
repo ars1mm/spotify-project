@@ -4,9 +4,10 @@ from typing import List, Dict, Optional
 
 # Global client instance
 _supabase_client = None
+_supabase_admin_client = None
 
 def get_supabase_client() -> Client:
-    """Get or create Supabase client instance"""
+    """Get or create Supabase client instance with anon key (for public operations)"""
     global _supabase_client
     if _supabase_client is None:
         url = os.getenv("SUPABASE_URL")
@@ -19,13 +20,32 @@ def get_supabase_client() -> Client:
     
     return _supabase_client
 
-class SupabaseStorageClient:
-    def __init__(self):
+def get_supabase_admin_client() -> Client:
+    """Get or create Supabase admin client instance with service role key (for admin operations)"""
+    global _supabase_admin_client
+    if _supabase_admin_client is None:
         url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_ANON_KEY")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         
         if not url or not key:
-            raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
+            raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
+        
+        _supabase_admin_client = create_client(url, key)
+    
+    return _supabase_admin_client
+
+class SupabaseStorageClient:
+    def __init__(self, use_service_role: bool = False):
+        url = os.getenv("SUPABASE_URL")
+        
+        if use_service_role:
+            key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            if not url or not key:
+                raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
+        else:
+            key = os.getenv("SUPABASE_ANON_KEY")
+            if not url or not key:
+                raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
         
         self.supabase: Client = create_client(url, key)
         self.bucket_name = os.getenv("SUPABASE_BUCKET_NAME", "songs")
@@ -146,20 +166,53 @@ class SupabaseStorageClient:
         except Exception as e:
             return {"error": str(e)}
     
-    def update_password(self, access_token: str, new_password: str) -> Dict:
+    def update_password(self, access_token: str, refresh_token: str, new_password: str) -> Dict:
         """Update user password with access token"""
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
         try:
-            # Set the session with the access token
-            self.supabase.auth.set_session(access_token, "")
+            logger.info(f"Attempting password update, has refresh token: {bool(refresh_token)}")
             
-            # Update the password
-            response = self.supabase.auth.update_user({"password": new_password})
-            
-            if response.user:
-                return {"success": True, "message": "Password updated successfully"}
+            if refresh_token:
+                # Use set_session when we have both tokens
+                self.supabase.auth.set_session(access_token, refresh_token)
+                response = self.supabase.auth.update_user({"password": new_password})
+                
+                if response.user:
+                    return {"success": True, "message": "Password updated successfully"}
+                else:
+                    return {"error": "Failed to update password"}
             else:
-                return {"error": "Failed to update password"}
+                # Fallback to direct API call with just access token
+                import httpx
+                url = os.getenv("SUPABASE_URL")
+                
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                    "Content-Type": "application/json"
+                }
+                
+                with httpx.Client() as client:
+                    response = client.put(
+                        f"{url}/auth/v1/user",
+                        headers=headers,
+                        json={"password": new_password}
+                    )
+                    
+                    logger.info(f"Supabase response status: {response.status_code}")
+                    logger.info(f"Supabase response body: {response.text}")
+                    
+                    if response.status_code == 200:
+                        return {"success": True, "message": "Password updated successfully"}
+                    else:
+                        error_data = response.json()
+                        error_msg = error_data.get("error_description") or error_data.get("msg") or error_data.get("error") or "Failed to update password"
+                        return {"error": error_msg}
         except Exception as e:
+            logger.error(f"Password update exception: {str(e)}")
             return {"error": str(e)}
     
     def search_songs(self, query: str, limit: int = 10) -> Dict:
