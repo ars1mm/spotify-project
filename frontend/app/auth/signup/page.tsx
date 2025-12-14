@@ -3,6 +3,7 @@
 import { Box, VStack, Text, Input, Button, Link } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiRequest } from '../../config/api';
 
 export default function SignUp() {
@@ -11,6 +12,8 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const router = useRouter();
 
   const handleSignUp = async () => {
     if (!email || !password || !name) {
@@ -18,8 +21,14 @@ export default function SignUp() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       const response = await apiRequest('/api/v1/auth/signup', {
@@ -28,10 +37,14 @@ export default function SignUp() {
       });
       
       if (response.success) {
-        alert('Account created successfully! Please check your email to verify.');
+        setSuccess('Account created successfully! Redirecting to login...');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 2000);
       }
-    } catch {
-      setError('Failed to create account. Please try again.');
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError(`Failed to create account: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setLoading(false);
     }
@@ -126,6 +139,12 @@ export default function SignUp() {
           {error && (
             <Box bg="red.900" color="white" p={3} borderRadius="md">
               {error}
+            </Box>
+          )}
+          
+          {success && (
+            <Box bg="green.900" color="white" p={3} borderRadius="md">
+              {success}
             </Box>
           )}
           

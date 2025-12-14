@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { FiSearch } from 'react-icons/fi'
 import { useHealthCheck } from '../../hooks/useApi'
 import { useSearch } from '../../contexts/SearchContext'
+import { usePlayer } from '../../contexts/PlayerContext'
 import { apiRequest } from '../../config/api'
 import { authStorage } from '../../lib/auth'
 
@@ -15,6 +16,8 @@ interface Song {
   album?: string
   duration_seconds?: number
   cover_image_url?: string
+  audio_url?: string
+  file_path?: string
 }
 
 const playlists = [
@@ -29,6 +32,7 @@ const playlists = [
 export function MainContent() {
   const { isHealthy, loading: healthLoading } = useHealthCheck()
   const { showSearch } = useSearch()
+  const { playSong } = usePlayer()
   const [userName, setUserName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Song[]>([])
@@ -141,6 +145,7 @@ export function MainContent() {
                     borderRadius="4px"
                     cursor="pointer"
                     transition="all 0.1s ease"
+                    onClick={() => playSong(song)}
                   >
                     <Text
                       color="#a7a7a7"
@@ -267,6 +272,7 @@ export function MainContent() {
                   borderRadius="4px"
                   cursor="pointer"
                   transition="all 0.1s ease"
+                  onClick={() => playSong(song)}
                 >
                   <Text
                     color="#a7a7a7"

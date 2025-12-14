@@ -24,7 +24,14 @@ export async function apiRequest(endpoint: string, options?: RequestInit) {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      } catch {
+        // If response is not JSON, use status message
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.json();
