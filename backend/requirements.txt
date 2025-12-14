@@ -8,3 +8,4 @@ redis
 supabase
 boto3
 python-multipart
+mutagen

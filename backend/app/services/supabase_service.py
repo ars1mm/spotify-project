@@ -34,3 +34,6 @@ class SupabaseService:
 
     def insert_song(self, song_data: dict):
         return self.client.insert_song(song_data)
+    
+    def delete_song(self, song_id: str):
+        return self.client.delete_song(song_id)

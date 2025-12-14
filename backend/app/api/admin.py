@@ -82,6 +82,31 @@ async def cleanup_orphaned_data(
     result = admin_service.cleanup_orphaned_data()
     return {"message": "Cleanup completed", "removed": result}
 
+@router.delete("/songs/{song_id}")
+async def delete_song(
+    song_id: str,
+    supabase_service: SupabaseService = Depends(get_supabase_service)
+):
+    """Delete a song and its associated file"""
+    try:
+        result = supabase_service.delete_song(song_id)
+        return {"success": True, "message": "Song deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/songs")
+async def list_all_songs(
+    page: int = 1,
+    limit: int = 50,
+    supabase_service: SupabaseService = Depends(get_supabase_service)
+):
+    """List all songs for admin management"""
+    try:
+        result = supabase_service.list_songs(page=page, limit=limit)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/songs/upload")
 async def upload_song(
     request: SongUploadRequest,
@@ -99,30 +124,48 @@ async def upload_song(
         
         title = decode_str(request.title)
         artist = decode_str(request.artist)
-        album = decode_str(request.album)
-        cover_image_url = decode_str(request.cover_image)
+        album = decode_str(request.album) or "Unknown"
+        cover_image_url = decode_str(request.cover_image) or "https://i.scdn.co/image/ab67616d0000b273277b3fd1c0b7e8a9b2b8b1b1"
         file_name = decode_str(request.file_name)
         content_type = decode_str(request.content_type)
         
         # Decode file content (bytes)
         file_content = base64.b64decode(request.file_content)
         
+        # Calculate duration from audio file metadata
+        duration_seconds = request.duration_seconds or 174  # Use provided or default
+        try:
+            import io
+            from mutagen import File as MutagenFile
+            
+            # Try to extract duration from audio metadata
+            audio_file = MutagenFile(io.BytesIO(file_content))
+            if audio_file and hasattr(audio_file, 'info') and hasattr(audio_file.info, 'length'):
+                duration_seconds = int(audio_file.info.length)
+        except Exception as e:
+            print(f"Could not extract duration: {e}")
+            # Keep the provided duration or default
+        
         # Sanitize filename for Supabase Storage
         import re
         sanitized_name = re.sub(r'[^a-zA-Z0-9._-]', '_', file_name)
-        file_path = f"{uuid.uuid4()}-{sanitized_name}"
+        # Remove songs/ prefix since it's already in the bucket path
+        file_path = f"{artist.lower().replace(' ', '_')}_{title.lower().replace(' ', '_')}.mp3"
+        
+        # If file_path in database has songs/ prefix, remove it for storage
+        storage_path = file_path.replace('songs/', '') if file_path.startswith('songs/') else file_path
         
         # 1. Upload file to Storage
-        uploaded_path = supabase_service.upload_file(file_content, file_path, content_type)
+        uploaded_path = supabase_service.upload_file(file_content, storage_path, content_type)
         
-        # 2. Insert metadata to Database
+        # 2. Insert metadata to Database with proper structure
         song_data = {
             "title": title,
             "artist": artist,
             "album": album,
-            "cover_image_url": cover_image_url,
-            "file_path": uploaded_path,
-            "duration_seconds": 0  # Extract from file metadata if possible
+            "duration_seconds": duration_seconds,
+            "file_path": storage_path,
+            "cover_image_url": cover_image_url
         }
         
         result = supabase_service.insert_song(song_data)

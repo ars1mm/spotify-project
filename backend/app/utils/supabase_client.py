@@ -65,13 +65,10 @@ class SupabaseStorageClient:
             
             songs = []
             for song in response.data:
-                # Generate public URL for the audio file if it exists in storage
+                # Generate public URL for the audio file
                 audio_url = None
                 if song.get('file_path'):
-                    try:
-                        audio_url = self.supabase.storage.from_(self.bucket_name).get_public_url(song['file_path'])
-                    except:
-                        audio_url = None
+                    audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}"
                 
                 song_data = {
                     "id": song['id'],
@@ -226,13 +223,10 @@ class SupabaseStorageClient:
             
             songs = []
             for song in response.data:
-                # Generate public URL for the audio file if it exists in storage
+                # Generate public URL for the audio file
                 audio_url = None
                 if song.get('file_path'):
-                    try:
-                        audio_url = self.supabase.storage.from_(self.bucket_name).get_public_url(song['file_path'])
-                    except:
-                        audio_url = None
+                    audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}"
                 
                 song_data = {
                     "id": song['id'],
@@ -272,4 +266,30 @@ class SupabaseStorageClient:
             return {"error": "No data returned after insert"}
         except Exception as e:
             print(f"Insert error: {str(e)}")
+            raise e
+    
+    def delete_song(self, song_id: str) -> dict:
+        """Delete song and its file from storage"""
+        try:
+            # First get the song to find the file path
+            song_response = self.supabase.table("songs").select("file_path").eq("id", song_id).execute()
+            
+            if not song_response.data:
+                raise Exception("Song not found")
+            
+            file_path = song_response.data[0].get("file_path")
+            
+            # Delete from database first
+            delete_response = self.supabase.table("songs").delete().eq("id", song_id).execute()
+            
+            # Then delete file from storage if it exists
+            if file_path:
+                try:
+                    self.supabase.storage.from_(self.bucket_name).remove([file_path])
+                except Exception as storage_error:
+                    print(f"Warning: Could not delete file from storage: {storage_error}")
+            
+            return {"success": True, "message": "Song deleted successfully"}
+        except Exception as e:
+            print(f"Delete error: {str(e)}")
             raise e
