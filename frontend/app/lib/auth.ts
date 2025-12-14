@@ -12,16 +12,21 @@ export interface Session {
 
 export const authStorage = {
   setSession: (session: Session) => {
-    localStorage.setItem('spotify_session', JSON.stringify(session));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spotify_session', JSON.stringify(session));
+    }
   },
   
   getSession: (): Session | null => {
+    if (typeof window === 'undefined') return null;
     const stored = localStorage.getItem('spotify_session');
     return stored ? JSON.parse(stored) : null;
   },
   
   clearSession: () => {
-    localStorage.removeItem('spotify_session');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('spotify_session');
+    }
   },
   
   isAuthenticated: (): boolean => {

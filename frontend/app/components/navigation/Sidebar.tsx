@@ -17,18 +17,18 @@ export function Sidebar() {
       borderRight="1px solid"
       borderColor="#535353"
     >
-      <VStack align="start" spacing={6}>
+      <VStack align="start" gap={6}>
         <Text fontSize="2xl" fontWeight="bold" color="white">
           Spotify
         </Text>
         
-        <VStack align="start" spacing={4} w="full">
+        <VStack align="start" gap={4} w="full">
           <NavItem icon={FiHome} label="Home" href="/" />
           <NavItem icon={FiSearch} label="Search" onClick={toggleSearch} />
           <NavItem icon={FiMusic} label="Your Library" />
         </VStack>
 
-        <VStack align="start" spacing={4} w="full" mt={8}>
+        <VStack align="start" gap={4} w="full" mt={8}>
           <NavItem icon={FiPlus} label="Create Playlist" />
           <NavItem icon={FiHeart} label="Liked Songs" />
         </VStack>
