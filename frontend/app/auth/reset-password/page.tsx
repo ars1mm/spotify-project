@@ -9,7 +9,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [accessToken, setAccessToken] = useState('')
+  const [accessToken] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function ResetPassword() {
       } else {
         setError(result.error || 'Failed to update password')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to update password. Please try again.')
     } finally {
       setLoading(false)

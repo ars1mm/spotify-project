@@ -8,11 +8,8 @@ import {
   Text,
   Input,
   Button,
-  Select,
   Flex,
-  Badge,
 } from '@chakra-ui/react'
-import { FiUpload, FiX, FiPlus, FiMusic, FiTrash2 } from 'react-icons/fi'
 
 interface Song {
   id: string
@@ -24,41 +21,7 @@ interface Song {
   audioFile: File | null
 }
 
-const POPULAR_ARTISTS = [
-  'Travis Scott',
-  'Drake',
-  'The Weeknd',
-  'Taylor Swift',
-  'Ed Sheeran',
-  'Ariana Grande',
-  'Post Malone',
-  'Billie Eilish',
-  'Dua Lipa',
-  'Justin Bieber',
-  'Kanye West',
-  'Beyoncé',
-  'Rihanna',
-  'Bruno Mars',
-  'Adele',
-]
 
-const POPULAR_ALBUMS = [
-  'UTOPIA',
-  'Certified Lover Boy',
-  'After Hours',
-  'Midnights',
-  'Divide',
-  'Thank U, Next',
-  "Hollywood's Bleeding",
-  'Happier Than Ever',
-  'Future Nostalgia',
-  'Justice',
-  'Donda',
-  'Renaissance',
-  'ANTI',
-  '24K Magic',
-  '30',
-]
 
 const GENRES = [
   'Pop',
@@ -84,7 +47,7 @@ const GENRES = [
 ]
 
 export default function AdminDashboard() {
-  const [adminToken, setAdminToken] = useState('admin-secret-key-123')
+  const adminToken = 'admin-secret-key-123'
   const [message, setMessage] = useState({ type: '', text: '' })
   const [songs, setSongs] = useState<Song[]>([
     {

@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, VStack, Text, Input, Button } from '@chakra-ui/react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 
 export default function ResetPasswordWithToken() {
@@ -56,7 +56,7 @@ export default function ResetPasswordWithToken() {
       } else {
         setError(result.error || 'Failed to update password')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to update password. Please try again.')
     } finally {
       setLoading(false)

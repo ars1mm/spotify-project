@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Flex } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sidebar } from '../navigation/Sidebar';
 import { MainContent } from './MainContent';
 import { Player } from '../player/Player';
@@ -11,11 +11,7 @@ import { SearchProvider } from '../../contexts/SearchContext';
 import { authStorage } from '../../lib/auth';
 
 export function SpotifyLayout() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    setIsAuthenticated(authStorage.isAuthenticated());
-  }, []);
+  const [isAuthenticated] = useState(() => authStorage.isAuthenticated());
 
   return (
     <SearchProvider>

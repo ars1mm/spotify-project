@@ -1,20 +1,16 @@
 'use client';
 
 import { Box, Text, Button, HStack } from '@chakra-ui/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authStorage, User } from '../../lib/auth';
 
 export function UserProfile() {
-  const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
+  const [user] = useState<User | null>(() => {
     const session = authStorage.getSession();
-    if (session?.user) {
-      setUser(session.user);
-    }
-  }, []);
+    return session?.user || null;
+  });
+  const router = useRouter();
 
   const handleLogout = () => {
     authStorage.clearSession();

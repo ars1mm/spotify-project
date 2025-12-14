@@ -30,7 +30,7 @@ export default function SignUp() {
       if (response.success) {
         alert('Account created successfully! Please check your email to verify.');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to create account. Please try again.');
     } finally {
       setLoading(false);
