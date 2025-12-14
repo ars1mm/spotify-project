@@ -153,8 +153,12 @@ export default function AdminDashboard() {
       file_content: fileBase64,
     }
 
+    const apiUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://spotify-project-achx.onrender.com'
+      : 'http://127.0.0.1:8000'
+
     const response = await fetch(
-      'http://127.0.0.1:8000/api/v1/admin/songs/upload',
+      `${apiUrl}/api/v1/admin/songs/upload`,
       {
         method: 'POST',
         headers: {
@@ -488,4 +492,4 @@ export default function AdminDashboard() {
       </HStack>
     </Box>
   )
-}
+} 
