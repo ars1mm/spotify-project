@@ -169,10 +169,15 @@ export function MainContent() {
                         <img
                           src={song.cover_image_url}
                           alt={song.title}
+                          onError={(e) => {
+                            console.error('Failed to load cover:', song.cover_image_url)
+                            e.currentTarget.style.display = 'none'
+                          }}
                           style={{
                             width: '40px',
                             height: '40px',
                             borderRadius: '4px',
+                            objectFit: 'cover',
                           }}
                         />
                       ) : (
@@ -211,7 +216,7 @@ export function MainContent() {
                       textOverflow="ellipsis"
                       whiteSpace="nowrap"
                     >
-                      {song.album || 'Unknown Album'}
+                      {song.album && song.album !== 'Unknown' ? song.album : song.artist}
                     </Text>
                     <Text
                       color="#a7a7a7"
@@ -296,6 +301,10 @@ export function MainContent() {
                       <img
                         src={song.cover_image_url}
                         alt={song.title}
+                        onError={(e) => {
+                          console.error('Failed to load cover:', song.cover_image_url)
+                          e.currentTarget.style.display = 'none'
+                        }}
                         style={{
                           width: '40px',
                           height: '40px',
@@ -339,7 +348,7 @@ export function MainContent() {
                     textOverflow="ellipsis"
                     whiteSpace="nowrap"
                   >
-                    {song.album || 'Unknown Album'}
+                    {song.album && song.album !== 'Unknown' ? song.album : song.artist}
                   </Text>
                   <Text
                     color="#a7a7a7"

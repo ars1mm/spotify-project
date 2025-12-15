@@ -298,13 +298,23 @@ class SupabaseStorageClient:
         """Upload cover image to Supabase Storage covers bucket"""
         try:
             covers_bucket = "covers"
-            self.supabase.storage.from_(covers_bucket).upload(
+            print(f"Uploading cover to: {covers_bucket}/{file_path}")
+            print(f"Content type: {content_type}")
+            print(f"File size: {len(file_content)} bytes")
+            
+            result = self.supabase.storage.from_(covers_bucket).upload(
                 path=file_path,
                 file=file_content,
                 file_options={"content-type": content_type, "upsert": "true"}
             )
+            print(f"Upload result: {result}")
+            
             # Return public URL
-            return f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{covers_bucket}/{file_path}"
+            public_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{covers_bucket}/{file_path}"
+            print(f"Cover URL: {public_url}")
+            return public_url
         except Exception as e:
             print(f"Cover upload error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise e
