@@ -125,12 +125,14 @@ async def upload_song(
         title = decode_str(request.title)
         artist = decode_str(request.artist)
         album = decode_str(request.album) or "Unknown"
-        cover_image_url = decode_str(request.cover_image) or "https://i.scdn.co/image/ab67616d0000b273277b3fd1c0b7e8a9b2b8b1b1"
+        cover_file_name = decode_str(request.cover_file_name)
+        cover_content_type = decode_str(request.cover_content_type)
         file_name = decode_str(request.file_name)
         content_type = decode_str(request.content_type)
         
         # Decode file content (bytes)
         file_content = base64.b64decode(request.file_content)
+        cover_file_content = base64.b64decode(request.cover_file_content)
         
         # Calculate duration from audio file metadata
         duration_seconds = request.duration_seconds or 174  # Use provided or default
@@ -155,17 +157,24 @@ async def upload_song(
         # If file_path in database has songs/ prefix, remove it for storage
         storage_path = file_path.replace('songs/', '') if file_path.startswith('songs/') else file_path
         
-        # 1. Upload file to Storage
+        # Generate cover image path
+        cover_ext = cover_file_name.split('.')[-1] if '.' in cover_file_name else 'jpg'
+        cover_path = f"{artist.lower().replace(' ', '_')}_{title.lower().replace(' ', '_')}.{cover_ext}"
+        
+        # 1. Upload cover image to covers bucket
+        cover_url = supabase_service.upload_cover(cover_file_content, cover_path, cover_content_type)
+        
+        # 2. Upload audio file to songs bucket
         uploaded_path = supabase_service.upload_file(file_content, storage_path, content_type)
         
-        # 2. Insert metadata to Database with proper structure
+        # 3. Insert metadata to Database with proper structure
         song_data = {
             "title": title,
             "artist": artist,
             "album": album,
             "duration_seconds": duration_seconds,
             "file_path": storage_path,
-            "cover_image_url": cover_image_url
+            "cover_image_url": cover_url
         }
         
         result = supabase_service.insert_song(song_data)

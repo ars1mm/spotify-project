@@ -9,10 +9,10 @@ import {
   Input,
   Button,
   Flex,
-  IconButton,
+  // IconButton,
   useDisclosure,
 } from '@chakra-ui/react'
-import { FiTrash2, FiUpload, FiPlus, FiMusic, FiX } from 'react-icons/fi'
+import { FiTrash2 } from 'react-icons/fi'
 
 interface Song {
   id: string
@@ -21,6 +21,7 @@ interface Song {
   album: string
   genre: string[]
   coverImage: string
+  coverFile: File | null
   audioFile: File | null
 }
 
@@ -74,6 +75,7 @@ export default function AdminDashboard() {
       album: '',
       genre: [],
       coverImage: '',
+      coverFile: null,
       audioFile: null,
     },
   ])
@@ -108,8 +110,8 @@ export default function AdminDashboard() {
         const data = await response.json()
         setExistingSongs(data.songs || [])
       }
-    } catch (error) {
-      console.error('Failed to fetch songs:', error)
+    } catch {
+      console.error('Failed to fetch songs:')
     }
   }
 
@@ -134,9 +136,10 @@ export default function AdminDashboard() {
       } else {
         throw new Error('Failed to delete song')
       }
-    } catch (error) {
-      setToastMessage({ type: 'error', text: 'Failed to delete song' })
-      setTimeout(() => setToastMessage(null), 3000)
+    } catch  {
+        setToastMessage({ type: 'error', text: 'Failed to delete song' })
+        setTimeout(() => setToastMessage(null), 3000)
+        console.error('Error deleting song:')
     }
   }
 
@@ -169,6 +172,7 @@ export default function AdminDashboard() {
         album: '',
         genre: [],
         coverImage: '',
+        coverFile: null,
         audioFile: null,
       },
     ])
@@ -227,19 +231,22 @@ export default function AdminDashboard() {
   }
 
   const uploadSong = async (song: Song) => {
-    if (!song.title || !song.artist || !song.audioFile) {
+    if (!song.title || !song.artist || !song.audioFile || !song.coverFile) {
       throw new Error(
-        `Song "${song.title || 'Untitled'}" is missing required fields`
+        `Song "${song.title || 'Untitled'}" is missing required fields (title, artist, audio, cover)`
       )
     }
 
     const fileBase64 = await fileToBase64(song.audioFile)
+    const coverBase64 = await fileToBase64(song.coverFile)
 
     const payload = {
       title: toBase64(song.title),
       artist: toBase64(song.artist),
       album: toBase64(song.album || 'Unknown'),
-      cover_image: toBase64(song.coverImage || ''),
+      cover_file_name: toBase64(song.coverFile.name),
+      cover_content_type: toBase64(song.coverFile.type),
+      cover_file_content: coverBase64,
       file_name: toBase64(song.audioFile.name),
       content_type: toBase64(song.audioFile.type),
       file_content: fileBase64,
@@ -276,7 +283,7 @@ export default function AdminDashboard() {
 
     const songsToUpload = uploadMode === 'single' ? [songs[0]] : songs
     const validSongs = songsToUpload.filter(
-      (s) => s.title && s.artist && s.audioFile
+      (s) => s.title && s.artist && s.audioFile && s.coverFile
     )
 
     if (validSongs.length === 0) {
@@ -325,6 +332,7 @@ export default function AdminDashboard() {
           album: '',
           genre: [],
           coverImage: '',
+          coverFile: null,
           audioFile: null,
         },
       ])
@@ -544,6 +552,30 @@ export default function AdminDashboard() {
                           />
                         </Box>
 
+                        {/* Cover Image */}
+                        <Box>
+                          <Text fontWeight="500" mb={1} color="black">
+                            Cover Image *
+                          </Text>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            color={'black'}
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                updateSong(song.id, 'coverFile', e.target.files[0])
+                              }
+                            }}
+                            border="1px solid #ccc"
+                            p={1}
+                          />
+                          {song.coverFile && (
+                            <Text fontSize="sm" color="gray.600" mt={1}>
+                              {song.coverFile.name} ({(song.coverFile.size / 1024).toFixed(2)} KB)
+                            </Text>
+                          )}
+                        </Box>
+
                         {/* Audio File */}
                         <Box>
                           <Text fontWeight="500" mb={1} color="black">
@@ -593,7 +625,7 @@ export default function AdminDashboard() {
                 Upload{' '}
                 {uploadMode === 'bulk'
                   ? `${
-                      songs.filter((s) => s.title && s.artist && s.audioFile)
+                      songs.filter((s) => s.title && s.artist && s.audioFile && s.coverFile)
                         .length
                     } Song(s)`
                   : 'Song'}

@@ -37,3 +37,6 @@ class SupabaseService:
     
     def delete_song(self, song_id: str):
         return self.client.delete_song(song_id)
+    
+    def upload_cover(self, file_content: bytes, file_path: str, content_type: str):
+        return self.client.upload_cover(file_content, file_path, content_type)

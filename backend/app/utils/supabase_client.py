@@ -293,3 +293,18 @@ class SupabaseStorageClient:
         except Exception as e:
             print(f"Delete error: {str(e)}")
             raise e
+    
+    def upload_cover(self, file_content: bytes, file_path: str, content_type: str) -> str:
+        """Upload cover image to Supabase Storage covers bucket"""
+        try:
+            covers_bucket = "covers"
+            self.supabase.storage.from_(covers_bucket).upload(
+                path=file_path,
+                file=file_content,
+                file_options={"content-type": content_type, "upsert": "true"}
+            )
+            # Return public URL
+            return f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{covers_bucket}/{file_path}"
+        except Exception as e:
+            print(f"Cover upload error: {str(e)}")
+            raise e
