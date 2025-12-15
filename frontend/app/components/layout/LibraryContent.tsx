@@ -2,6 +2,7 @@
 
 import { Box, Text, VStack } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { authStorage } from '../../lib/auth'
 
@@ -28,7 +29,8 @@ export function LibraryContent() {
 
   const handleSongClick = (song: Song) => {
     if (!isAuthenticated) {
-      alert('Please log in to play songs')
+      toast.dismiss()
+      toast.error('Please log in to play songs')
       return
     }
     playSong(song)

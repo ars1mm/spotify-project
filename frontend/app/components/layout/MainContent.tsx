@@ -2,6 +2,7 @@
 
 import { Box, Text, SimpleGrid, VStack, Input } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { FiSearch } from 'react-icons/fi'
 import { useSearch } from '../../contexts/SearchContext'
 import { usePlayer } from '../../contexts/PlayerContext'
@@ -52,7 +53,8 @@ export function MainContent() {
 
   const handleSongClick = (song: Song) => {
     if (!isAuthenticated) {
-      alert('Please log in to play songs')
+      toast.dismiss()
+      toast.error('Please log in to play songs')
       return
     }
     playSong(song)

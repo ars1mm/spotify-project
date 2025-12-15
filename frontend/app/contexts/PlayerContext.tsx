@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react'
+import toast from 'react-hot-toast'
 
 interface Song {
   id: string
@@ -60,7 +61,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       console.error('Audio error for song:', currentSong?.title, e)
       console.error('Failed audio URL:', currentSong?.audio_url)
       setIsPlaying(false)
-      alert(`Cannot play "${currentSong?.title}". Audio file not found or bucket not configured.`)
+      toast.dismiss()
+      toast.error(`Cannot play "${currentSong?.title}". Audio file not found.`)
     }
     const handleLoadStart = () => console.log('Loading audio:', currentSong?.title)
 
