@@ -6,7 +6,7 @@ import { ProgressBar } from '../ui/ProgressBar';
 import { usePlayer } from '../../contexts/PlayerContext';
 
 export function PlayerControls() {
-  const { currentSong, isPlaying, togglePlay, currentTime, duration, seekTo } = usePlayer();
+  const { currentSong, isPlaying, togglePlay, currentTime, duration, seekTo, playNext, playPrevious, hasNext, hasPrevious } = usePlayer();
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return '0:00'
@@ -24,9 +24,16 @@ export function PlayerControls() {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
   return (
-    <Box flex="2" maxW="722px">
-      <Box display="flex" justifyContent="center" alignItems="center" gap={4} mb={2}>
-        <Button variant="ghost" color="#B3B3B3" _hover={{ color: 'white' }}>
+    <Box flex="2" maxW="722px" w="full">
+      <Box display="flex" justifyContent="center" alignItems="center" gap={{ base: 2, md: 4 }} mb={{ base: 1, md: 2 }}>
+        <Button 
+          variant="ghost" 
+          color={hasPrevious ? 'white' : '#535353'} 
+          _hover={{ color: hasPrevious ? 'white' : '#535353' }} 
+          onClick={playPrevious}
+          cursor={hasPrevious ? 'pointer' : 'not-allowed'}
+          size={{ base: "sm", md: "md" }}
+        >
           <FiSkipBack />
         </Button>
         <Button
@@ -35,17 +42,24 @@ export function PlayerControls() {
           bg="white"
           _hover={{ bg: 'gray.200' }}
           borderRadius="full"
-          size="lg"
+          size={{ base: "md", md: "lg" }}
           onClick={togglePlay}
           disabled={!currentSong}
         >
           {isPlaying ? <FiPause /> : <FiPlay />}
         </Button>
-        <Button variant="ghost" color="#B3B3B3" _hover={{ color: 'white' }}>
+        <Button 
+          variant="ghost" 
+          color={hasNext ? 'white' : '#535353'} 
+          _hover={{ color: hasNext ? 'white' : '#535353' }} 
+          onClick={playNext}
+          cursor={hasNext ? 'pointer' : 'not-allowed'}
+          size={{ base: "sm", md: "md" }}
+        >
           <FiSkipForward />
         </Button>
       </Box>
-      <Box display="flex" alignItems="center" gap={2}>
+      <Box display={{ base: "none", md: "flex" }} alignItems="center" gap={2}>
         <Text color="#B3B3B3" fontSize="xs">{formatTime(currentTime)}</Text>
         <Box
           flex={1}

@@ -23,17 +23,30 @@ interface PlayerContextType {
   togglePlay: () => void
   setVolume: (volume: number) => void
   seekTo: (time: number) => void
+  playNext: () => void
+  playPrevious: () => void
+  hasNext: boolean
+  hasPrevious: boolean
   audioRef: React.RefObject<HTMLAudioElement | null>
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const [currentSong, setCurrentSong] = useState<Song | null>(null)
+  const [currentSong, setCurrentSong] = useState<Song | null>(() => {
+    try {
+      const stored = localStorage.getItem('lastSongListened')
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(0.7)
+  const [songHistory, setSongHistory] = useState<Song[]>([])
+  const [currentIndex, setCurrentIndex] = useState(-1)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
@@ -86,6 +99,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return
     }
     
+    // Add to history if it's a new song
+    setSongHistory(prev => {
+      const newHistory = [...prev, song]
+      setCurrentIndex(newHistory.length - 1)
+      return newHistory
+    })
+    
+    // Save to recent songs in localStorage
+    try {
+      const stored = localStorage.getItem('recentSongs')
+      const recentSongs: Song[] = stored ? JSON.parse(stored) : []
+      const filtered = recentSongs.filter(s => s.id !== song.id)
+      const updated = [song, ...filtered].slice(0, 10)
+      localStorage.setItem('recentSongs', JSON.stringify(updated))
+      localStorage.setItem('lastSongListened', JSON.stringify(song))
+    } catch (error) {
+      console.error('Failed to save recent song:', error)
+    }
+    
     setCurrentSong(song)
     setIsPlaying(true)
   }
@@ -111,6 +143,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const playNext = () => {
+    if (currentIndex < songHistory.length - 1) {
+      const nextSong = songHistory[currentIndex + 1]
+      setCurrentIndex(currentIndex + 1)
+      setCurrentSong(nextSong)
+      setIsPlaying(true)
+    }
+  }
+
+  const playPrevious = () => {
+    if (currentIndex > 0) {
+      const prevSong = songHistory[currentIndex - 1]
+      setCurrentIndex(currentIndex - 1)
+      setCurrentSong(prevSong)
+      setIsPlaying(true)
+    }
+  }
+
+  const hasNext = currentIndex < songHistory.length - 1
+  const hasPrevious = currentIndex > 0
+
   return (
     <PlayerContext.Provider value={{
       currentSong,
@@ -123,6 +176,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       togglePlay,
       setVolume,
       seekTo,
+      playNext,
+      playPrevious,
+      hasNext,
+      hasPrevious,
       audioRef
     }}>
       {children}

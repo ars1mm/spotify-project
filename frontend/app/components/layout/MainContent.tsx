@@ -3,7 +3,6 @@
 import { Box, Text, SimpleGrid, VStack, Input } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { FiSearch } from 'react-icons/fi'
-import { useHealthCheck } from '../../hooks/useApi'
 import { useSearch } from '../../contexts/SearchContext'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { apiRequest } from '../../config/api'
@@ -30,7 +29,6 @@ const playlists = [
 ]
 
 export function MainContent() {
-  const { isHealthy, loading: healthLoading } = useHealthCheck()
   const { showSearch } = useSearch()
   const { playSong } = usePlayer()
   const [userName, setUserName] = useState('')
@@ -92,7 +90,7 @@ export function MainContent() {
   }, [searchQuery])
 
   return (
-    <Box flex="1" bg="#121212" p={8} overflowY="auto">
+    <Box flex="1" bg="#121212" p={{ base: 4, md: 8 }} overflowY="auto">
       <VStack align="start" gap={8}>
         <Text fontSize="3xl" fontWeight="bold" color="white">
           Good evening{userName ? `, ${userName}` : ''}
@@ -245,19 +243,6 @@ export function MainContent() {
           </VStack>
         )}
 
-        <Box w="full" p={4} bg="#1e1e1e" borderRadius="md">
-          <Text fontSize="lg" fontWeight="bold" color="white" mb={2}>
-            Backend Status
-          </Text>
-          {healthLoading ? (
-            <Text color="gray.400">Checking connection...</Text>
-          ) : (
-            <Text color={isHealthy ? 'green.400' : 'red.400'}>
-              {isHealthy ? '✓ Connected to backend' : '✗ Backend unavailable'}
-            </Text>
-          )}
-        </Box>
-
         <VStack align="start" gap={4} w="full">
           <Text fontSize="2xl" fontWeight="bold" color="white">
             All Songs
@@ -343,7 +328,8 @@ export function MainContent() {
                     color="#a7a7a7"
                     fontSize="14px"
                     mr={4}
-                    minW="120px"
+                    minW={{ base: "0", md: "120px" }}
+                    display={{ base: "none", md: "block" }}
                     overflow="hidden"
                     textOverflow="ellipsis"
                     whiteSpace="nowrap"
@@ -355,6 +341,7 @@ export function MainContent() {
                     fontSize="14px"
                     minW="50px"
                     textAlign="right"
+                    display={{ base: "none", md: "block" }}
                   >
                     {song.duration_seconds
                       ? `${Math.floor(song.duration_seconds / 60)}:${(
@@ -378,7 +365,7 @@ export function MainContent() {
           <Text fontSize="2xl" fontWeight="bold" color="white">
             Made for you
           </Text>
-          <SimpleGrid columns={3} gap={6} w="full">
+          <SimpleGrid columns={{ base: 2, md: 3 }} gap={{ base: 4, md: 6 }} w="full">
             {playlists.map((playlist) => (
               <Box
                 key={playlist.id}
@@ -391,8 +378,8 @@ export function MainContent() {
               >
                 <VStack gap={3}>
                   <Box
-                    w="150px"
-                    h="150px"
+                    w={{ base: "100%", md: "150px" }}
+                    h={{ base: "120px", md: "150px" }}
                     bg="gray.500"
                     borderRadius="md"
                     display="flex"

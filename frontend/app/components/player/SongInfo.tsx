@@ -20,8 +20,8 @@ export function SongInfo() {
   }
 
   return (
-    <Box display="flex" alignItems="center" gap={4} flex="1">
-      <Box w="56px" h="56px" bg="gray.500" borderRadius="md" overflow="hidden">
+    <Box display="flex" alignItems="center" gap={{ base: 2, md: 4 }} flex="1" minW="0">
+      <Box w={{ base: "40px", md: "56px" }} h={{ base: "40px", md: "56px" }} bg="gray.500" borderRadius="md" overflow="hidden" flexShrink={0}>
         {currentSong.cover_image_url ? (
           <img 
             src={currentSong.cover_image_url} 
@@ -34,11 +34,28 @@ export function SongInfo() {
           </Box>
         )}
       </Box>
-      <Box>
-        <Text color="white" fontWeight="medium">{currentSong.title}</Text>
-        <Text color="#B3B3B3" fontSize="sm">{currentSong.artist}</Text>
+      <Box flex="1" minW="0" maxW={{ base: "120px", md: "200px" }}>
+        <Text 
+          color="white" 
+          fontWeight="medium"
+          fontSize={{ base: "sm", md: "md" }}
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+        >
+          {currentSong.title}
+        </Text>
+        <Text 
+          color="#B3B3B3" 
+          fontSize={{ base: "xs", md: "sm" }}
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+        >
+          {currentSong.artist}
+        </Text>
       </Box>
-      <Button variant="ghost" color="#B3B3B3" _hover={{ color: 'white' }}>
+      <Button display={{ base: "none", md: "flex" }} variant="ghost" color="#B3B3B3" _hover={{ color: 'white' }} flexShrink={0}>
         <FiHeart />
       </Button>
     </Box>
