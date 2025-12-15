@@ -3,6 +3,7 @@
 import { Box, Text, VStack } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { authStorage } from '../../lib/auth'
 
 interface Song {
   id: string
@@ -18,10 +19,20 @@ export function LibraryContent() {
   const { playSong } = usePlayer()
   const [recentSongs, setRecentSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    setIsAuthenticated(authStorage.isAuthenticated())
     loadRecentSongs()
   }, [])
+
+  const handleSongClick = (song: Song) => {
+    if (!isAuthenticated) {
+      alert('Please log in to play songs')
+      return
+    }
+    playSong(song)
+  }
 
   const loadRecentSongs = () => {
     setLoading(true)
@@ -64,7 +75,7 @@ export function LibraryContent() {
                   borderRadius="4px"
                   cursor="pointer"
                   transition="all 0.1s ease"
-                  onClick={() => playSong(song)}
+                  onClick={() => handleSongClick(song)}
                 >
                   <Text
                     color="#a7a7a7"

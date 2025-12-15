@@ -32,6 +32,7 @@ export function MainContent() {
   const { showSearch } = useSearch()
   const { playSong } = usePlayer()
   const [userName, setUserName] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Song[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
@@ -40,6 +41,7 @@ export function MainContent() {
 
   useEffect(() => {
     const session = authStorage.getSession()
+    setIsAuthenticated(authStorage.isAuthenticated())
     if (session?.user?.name) {
       setUserName(session.user.name)
     }
@@ -47,6 +49,14 @@ export function MainContent() {
     // Load all songs on mount
     loadAllSongs()
   }, [])
+
+  const handleSongClick = (song: Song) => {
+    if (!isAuthenticated) {
+      alert('Please log in to play songs')
+      return
+    }
+    playSong(song)
+  }
 
   const loadAllSongs = async () => {
     setSongsLoading(true)
@@ -143,7 +153,7 @@ export function MainContent() {
                     borderRadius="4px"
                     cursor="pointer"
                     transition="all 0.1s ease"
-                    onClick={() => playSong(song)}
+                    onClick={() => handleSongClick(song)}
                   >
                     <Text
                       color="#a7a7a7"
@@ -262,7 +272,7 @@ export function MainContent() {
                   borderRadius="4px"
                   cursor="pointer"
                   transition="all 0.1s ease"
-                  onClick={() => playSong(song)}
+                  onClick={() => handleSongClick(song)}
                 >
                   <Text
                     color="#a7a7a7"
