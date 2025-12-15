@@ -33,7 +33,12 @@ export default function SignUp() {
     try {
       const response = await apiRequest('/api/v1/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name })
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          name,
+          captcha_token: 'dev-bypass'
+        })
       });
       
       if (response.success) {

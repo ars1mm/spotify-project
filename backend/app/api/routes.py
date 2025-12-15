@@ -61,13 +61,16 @@ class SignupRequest(BaseModel):
     email: str
     password: str
     name: str
+    captcha_token: str = None
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+    captcha_token: str = None
 
 class ResetPasswordRequest(BaseModel):
     email: str
+    captcha_token: str = None
 
 class UpdatePasswordRequest(BaseModel):
     access_token: str

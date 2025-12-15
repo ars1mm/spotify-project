@@ -28,7 +28,11 @@ export default function Login() {
     try {
       const response = await apiRequest('/api/v1/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ 
+          email, 
+          password,
+          captcha_token: 'dev-bypass'
+        })
       });
       
       if (response.success) {
@@ -69,7 +73,10 @@ export default function Login() {
     try {
       const response = await apiRequest('/api/v1/auth/reset-password', {
         method: 'POST',
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ 
+          email,
+          captcha_token: 'dev-bypass'
+        })
       });
       
       if (response.success) {
