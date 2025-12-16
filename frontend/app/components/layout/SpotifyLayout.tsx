@@ -8,8 +8,6 @@ import { MainContent } from './MainContent';
 import { Player } from '../player/Player';
 import { AuthButtons } from '../auth/AuthButtons';
 import { UserProfile } from '../user/UserProfile';
-import { SearchProvider } from '../../contexts/SearchContext';
-import { PlayerProvider } from '../../contexts/PlayerContext';
 import { authStorage } from '../../lib/auth';
 
 export function SpotifyLayout() {
@@ -17,9 +15,7 @@ export function SpotifyLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <SearchProvider>
-      <PlayerProvider>
-        <Box h="100vh" bg="#191414">
+    <Box h="100vh" bg="#191414">
           {/* Mobile Header */}
           <Box
             display={{ base: "flex", md: "none" }}
@@ -77,7 +73,5 @@ export function SpotifyLayout() {
           </Flex>
           <Player />
         </Box>
-      </PlayerProvider>
-    </SearchProvider>
   );
 }

@@ -7,8 +7,6 @@ import { LibraryContent } from '../components/layout/LibraryContent'
 import { Player } from '../components/player/Player'
 import { AuthButtons } from '../components/auth/AuthButtons'
 import { UserProfile } from '../components/user/UserProfile'
-import { SearchProvider } from '../contexts/SearchContext'
-import { PlayerProvider } from '../contexts/PlayerContext'
 import { authStorage } from '../lib/auth'
 
 export default function LibraryPage() {
@@ -16,20 +14,16 @@ export default function LibraryPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <SearchProvider>
-      <PlayerProvider>
-        <Box h="100vh" bg="#191414">
-          <Box position="absolute" top={{ base: "8px", md: 4 }} right={4} zIndex={16}>
-            {isAuthenticated ? <UserProfile /> : <AuthButtons />}
-          </Box>
+    <Box h="100vh" bg="#191414">
+      <Box position="absolute" top={{ base: "8px", md: 4 }} right={4} zIndex={16}>
+        {isAuthenticated ? <UserProfile /> : <AuthButtons />}
+      </Box>
 
-          <Flex h="100vh" pt={{ base: "56px", md: 0 }} pb="90px">
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-            <LibraryContent />
-          </Flex>
-          <Player />
-        </Box>
-      </PlayerProvider>
-    </SearchProvider>
+      <Flex h="100vh" pt={{ base: "56px", md: 0 }} pb="90px">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <LibraryContent />
+      </Flex>
+      <Player />
+    </Box>
   )
 }
