@@ -20,6 +20,15 @@ interface Song {
   file_path?: string
 }
 
+interface Playlist {
+  id: string
+  name: string
+  description: string
+  is_public: boolean
+  user_id: string
+  created_at: string
+}
+
 const playlists = [
   { id: 1, name: "Today's Top Hits", image: '/placeholder.jpg' },
   { id: 2, name: 'RapCaviar', image: '/placeholder.jpg' },
@@ -36,6 +45,7 @@ export function MainContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Song[]>([])
+  const [searchPlaylists, setSearchPlaylists] = useState<Playlist[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [songsLoading, setSongsLoading] = useState(false)
@@ -76,6 +86,7 @@ export function MainContent() {
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([])
+      setSearchPlaylists([])
       return
     }
 
@@ -85,9 +96,11 @@ export function MainContent() {
         `/api/v1/search?q=${encodeURIComponent(query)}`
       )
       setSearchResults(response.songs || [])
+      setSearchPlaylists(response.playlists || [])
     } catch (error) {
       console.error('Search failed:', error)
       setSearchResults([])
+      setSearchPlaylists([])
     } finally {
       setSearchLoading(false)
     }
@@ -139,10 +152,73 @@ export function MainContent() {
 
             {searchLoading && <Text color="#a7a7a7">Searching...</Text>}
 
+            {searchPlaylists.length > 0 && (
+              <VStack align="start" gap={4} w="full">
+                <Text color="white" fontWeight="bold" fontSize="xl">
+                  Playlists
+                </Text>
+                <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4} w="full">
+                  {searchPlaylists.map((playlist) => (
+                    <Box
+                      key={playlist.id}
+                      bg="#181818"
+                      p={4}
+                      borderRadius="8px"
+                      cursor="pointer"
+                      transition="all 0.2s"
+                      _hover={{ bg: '#282828' }}
+                      onClick={() => window.location.href = `/playlist/${playlist.id}`}
+                    >
+                      <Box
+                        w="full"
+                        h="120px"
+                        bg="#282828"
+                        borderRadius="8px"
+                        mb={3}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        <Text color="#a7a7a7" fontSize="48px">
+                          ♪
+                        </Text>
+                      </Box>
+                      <Text
+                        color="white"
+                        fontWeight="bold"
+                        fontSize="14px"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
+                      >
+                        {playlist.name}
+                      </Text>
+                      {playlist.description && (
+                        <Box
+                          color="#a7a7a7"
+                          fontSize="12px"
+                          mt={1}
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          display="-webkit-box"
+                          css={{
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}
+                        >
+                          {playlist.description}
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </SimpleGrid>
+              </VStack>
+            )}
+
             {searchResults.length > 0 && (
               <VStack align="start" gap={0} w="full">
-                <Text color="white" fontWeight="bold" mb={4}>
-                  Search Results
+                <Text color="white" fontWeight="bold" fontSize="xl" mb={4}>
+                  Songs
                 </Text>
                 {searchResults.map((song, index: number) => (
                   <Box
@@ -247,7 +323,7 @@ export function MainContent() {
               </VStack>
             )}
 
-            {searchQuery && !searchLoading && searchResults.length === 0 && (
+            {searchQuery && !searchLoading && searchResults.length === 0 && searchPlaylists.length === 0 && (
               <Text color="#a7a7a7">
                 No results found for &quot;{searchQuery}&quot;
               </Text>

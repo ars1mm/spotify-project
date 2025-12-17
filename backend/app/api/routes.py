@@ -210,5 +210,16 @@ def remove_song_from_playlist(playlist_id: str, song_id: str):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
+@router.post("/playlists/{playlist_id}/songs/{song_id}", tags=["playlists"])
+def add_song_to_playlist(playlist_id: str, song_id: str):
+    """
+    Add a song to playlist
+    """
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.add_song_to_playlist(playlist_id, song_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
 # Upload endpoint moved to admin routes (/api/v1/admin/songs/upload)
 # This ensures only authenticated admins can upload songs

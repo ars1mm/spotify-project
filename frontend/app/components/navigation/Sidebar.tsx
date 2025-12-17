@@ -22,7 +22,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { toggleSearch } = useSearch();
   const [playlists, setPlaylists] = useState<Playlist[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading,setLoading] = useState(false)
 
   useEffect(() => {
     loadPlaylists()

@@ -446,3 +446,19 @@ class SupabaseStorageClient:
             return {"success": True, "message": "Song removed from playlist"}
         except Exception as e:
             return {"error": str(e)}
+    
+    def add_song_to_playlist(self, playlist_id: str, song_id: str) -> dict:
+        """Add a song to playlist"""
+        try:
+            # Get max position
+            response = self.supabase.table("playlist_songs").select("position").eq("playlist_id", playlist_id).order("position", desc=True).limit(1).execute()
+            position = (response.data[0]['position'] + 1) if response.data else 0
+            
+            self.supabase.table("playlist_songs").insert({
+                "playlist_id": playlist_id,
+                "song_id": song_id,
+                "position": position
+            }).execute()
+            return {"success": True, "message": "Song added to playlist"}
+        except Exception as e:
+            return {"error": str(e)}

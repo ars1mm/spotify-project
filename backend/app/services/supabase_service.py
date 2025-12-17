@@ -55,3 +55,6 @@ class SupabaseService:
     
     def remove_song_from_playlist(self, playlist_id: str, song_id: str):
         return self.client.remove_song_from_playlist(playlist_id, song_id)
+    
+    def add_song_to_playlist(self, playlist_id: str, song_id: str):
+        return self.client.add_song_to_playlist(playlist_id, song_id)

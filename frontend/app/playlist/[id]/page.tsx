@@ -47,6 +47,9 @@ export default function PlaylistPage() {
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editIsPublic, setEditIsPublic] = useState(true)
+  const [showAddSongs, setShowAddSongs] = useState(false)
+  const [allSongs, setAllSongs] = useState<Song[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const currentUserId = authStorage.getUser()?.id
 
   useEffect(() => {
@@ -79,12 +82,20 @@ export default function PlaylistPage() {
     playSong(song)
   }
 
-  const openSettings = () => {
+  const openSettings = async () => {
     if (playlist) {
       setEditName(playlist.name)
       setEditDescription(playlist.description)
       setEditIsPublic(playlist.is_public)
       setIsSettingsOpen(true)
+      
+      // Load all songs for adding
+      try {
+        const response = await apiRequest('/api/v1/songs?page=1&limit=100')
+        setAllSongs(response.songs || [])
+      } catch (error) {
+        console.error('Failed to load songs:', error)
+      }
     }
   }
 
@@ -112,6 +123,16 @@ export default function PlaylistPage() {
     }
   }
 
+  const handleAddSong = async (songId: string) => {
+    try {
+      await apiRequest(`/api/v1/playlists/${params.id}/songs/${songId}`, { method: 'POST' })
+      toast.success('Song added')
+      loadPlaylist(params.id as string)
+    } catch (error) {
+      toast.error('Failed to add song')
+    }
+  }
+
   return (
     <Box h="100vh" bg="#191414">
       <Box position="absolute" top={{ base: "8px", md: 4 }} right={4} zIndex={16}>
@@ -126,89 +147,88 @@ export default function PlaylistPage() {
             <Text color="white">Loading...</Text>
           ) : playlist ? (
             <VStack align="start" gap={6} w="full">
-              <Flex gap={6} align="end" w="full" position="relative">
-                <Box
-                  w={{ base: "160px", md: "232px" }}
-                  h={{ base: "160px", md: "232px" }}
-                  bg="#282828"
-                  borderRadius="8px"
-                  flexShrink={0}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  boxShadow="0 4px 60px rgba(0,0,0,.5)"
-                >
-                  {songs.length > 0 && songs[0].cover_image_url ? (
-                    <img
-                      src={songs[0].cover_image_url}
-                      alt={playlist.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '8px',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  ) : (
-                    <Text color="#a7a7a7" fontSize="48px">
-                      ♪
-                    </Text>
-                  )}
-                </Box>
-                <Box flex="1" pb={4}>
-                  <Text fontSize="sm" fontWeight="bold" color="white" textTransform="uppercase">
-                    Playlist
-                  </Text>
-                  <Text fontSize={{ base: "2xl", md: "5xl" }} fontWeight="bold" color="white" mt={2}>
-                    {playlist.name}
-                  </Text>
-                  {playlist.description && (
-                    <Text color="#a7a7a7" mt={2}>
-                      {playlist.description}
-                    </Text>
-                  )}
-                  <Flex align="center" gap={1} fontSize="sm" mt={2}>
-                    {playlist.users?.name && (
-                      <Text color="white" fontWeight="bold">
-                        {playlist.users.name}
+              <Flex gap={6} align="end" w="full">
+                  <Box
+                    w={{ base: "160px", md: "232px" }}
+                    h={{ base: "160px", md: "232px" }}
+                    bg="#282828"
+                    borderRadius="8px"
+                    flexShrink={0}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    boxShadow="0 4px 60px rgba(0,0,0,.5)"
+                  >
+                    {songs.length > 0 && songs[0].cover_image_url ? (
+                      <img
+                        src={songs[0].cover_image_url}
+                        alt={playlist.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Text color="#a7a7a7" fontSize="48px">
+                        ♪
                       </Text>
                     )}
-                    {playlist.users?.name && <Text color="#a7a7a7">•</Text>}
-                    <Text color="#a7a7a7">
-                      {songs.length} song{songs.length !== 1 ? 's' : ''}
+                  </Box>
+                  <Box flex="1" pb={4} position="relative">
+                    <Flex align="center" justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="bold" color="white" textTransform="uppercase">
+                        Playlist
+                      </Text>
+                      {currentUserId === playlist.user_id && (
+                        <Button
+                          aria-label="Settings"
+                          onClick={openSettings}
+                          bg="transparent"
+                          _hover={{ bg: 'rgba(255,255,255,0.1)' }}
+                          color="white"
+                          minW="auto"
+                          p={2}
+                        >
+                          <Text fontSize="20px">⚙️</Text>
+                        </Button>
+                      )}
+                    </Flex>
+                    <Text fontSize={{ base: "2xl", md: "5xl" }} fontWeight="bold" color="white">
+                      {playlist.name}
                     </Text>
-                    {songs.length > 0 && (
-                      <>
-                        <Text color="#a7a7a7">•</Text>
-                        <Text color="#a7a7a7">
-                          {(() => {
-                            const totalSeconds = songs.reduce((acc, song) => acc + (song.duration_seconds || 0), 0)
-                            const hours = Math.floor(totalSeconds / 3600)
-                            const minutes = Math.floor((totalSeconds % 3600) / 60)
-                            return hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`
-                          })()}
-                        </Text>
-                      </>
+                    {playlist.description && (
+                      <Text color="#a7a7a7" mt={2}>
+                        {playlist.description}
+                      </Text>
                     )}
-                  </Flex>
-                </Box>
-                {currentUserId === playlist.user_id && (
-                  <Button
-                    aria-label="Settings"
-                    onClick={openSettings}
-                    bg="transparent"
-                    _hover={{ bg: 'rgba(255,255,255,0.1)' }}
-                    color="white"
-                    position="absolute"
-                    top={0}
-                    right={0}
-                    minW="auto"
-                    p={2}
-                  >
-                    <Text fontSize="20px">⚙️</Text>
-                  </Button>
-                )}
-              </Flex>
+                    <Flex align="center" gap={1} fontSize="sm" mt={2}>
+                      {playlist.users?.name && (
+                        <Text color="white" fontWeight="bold">
+                          {playlist.users.name}
+                        </Text>
+                      )}
+                      {playlist.users?.name && <Text color="#a7a7a7">•</Text>}
+                      <Text color="#a7a7a7">
+                        {songs.length} song{songs.length !== 1 ? 's' : ''}
+                      </Text>
+                      {songs.length > 0 && (
+                        <>
+                          <Text color="#a7a7a7">•</Text>
+                          <Text color="#a7a7a7">
+                            {(() => {
+                              const totalSeconds = songs.reduce((acc, song) => acc + (song.duration_seconds || 0), 0)
+                              const hours = Math.floor(totalSeconds / 3600)
+                              const minutes = Math.floor((totalSeconds % 3600) / 60)
+                              return hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`
+                            })()}
+                          </Text>
+                        </>
+                      )}
+                    </Flex>
+                  </Box>
+                </Flex>
 
               <VStack align="start" gap={0} w="full">
                 {songs.length > 0 ? (
@@ -364,10 +384,84 @@ export default function PlaylistPage() {
             w="90%"
             onClick={(e) => e.stopPropagation()}
           >
-            <Text fontSize="2xl" fontWeight="bold" color="white" mb={4}>
-              Playlist Settings
-            </Text>
-            <VStack gap={4} align="stretch">
+            <Flex justify="space-between" align="center" mb={4}>
+              <Text fontSize="2xl" fontWeight="bold" color="white">
+                {showAddSongs ? 'Add Songs' : 'Playlist Settings'}
+              </Text>
+              {!showAddSongs && (
+                <Button
+                  size="sm"
+                  bg="#1db954"
+                  color="white"
+                  _hover={{ bg: '#1ed760' }}
+                  onClick={() => setShowAddSongs(true)}
+                >
+                  + Add Songs
+                </Button>
+              )}
+            </Flex>
+            {showAddSongs ? (
+              <VStack gap={4} align="stretch" maxH="400px" overflowY="auto">
+                <Input
+                  placeholder="Search songs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  bg="#3e3e3e"
+                  border="none"
+                  color="white"
+                />
+                {allSongs
+                  .filter(song => 
+                    !songs.find(s => s.id === song.id) &&
+                    (song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                     song.artist.toLowerCase().includes(searchQuery.toLowerCase()))
+                  )
+                  .map(song => (
+                    <Flex
+                      key={song.id}
+                      align="center"
+                      gap={3}
+                      p={2}
+                      bg="#3e3e3e"
+                      borderRadius="4px"
+                      _hover={{ bg: '#4e4e4e' }}
+                      cursor="pointer"
+                      onClick={() => handleAddSong(song.id)}
+                    >
+                      <Box w="40px" h="40px" bg="#282828" borderRadius="4px" flexShrink={0}>
+                        {song.cover_image_url ? (
+                          <img src={song.cover_image_url} alt={song.title} style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                        ) : (
+                          <Flex align="center" justify="center" h="full">
+                            <Text color="#a7a7a7" fontSize="12px">♪</Text>
+                          </Flex>
+                        )}
+                      </Box>
+                      <Box flex="1" minW="0">
+                        <Text
+                          color="white"
+                          fontSize="14px"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap"
+                        >
+                          {song.title}
+                        </Text>
+                        <Text
+                          color="#a7a7a7"
+                          fontSize="12px"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap"
+                        >
+                          {song.artist}
+                        </Text>
+                      </Box>
+                    </Flex>
+                  ))}
+              </VStack>
+            ) : (
+              <VStack gap={4} align="stretch">
               <Box>
                 <Text color="white" mb={2} fontSize="sm">Name</Text>
                 <Input
@@ -400,24 +494,38 @@ export default function PlaylistPage() {
                   {editIsPublic ? 'Yes' : 'No'}
                 </Button>
               </Flex>
-            </VStack>
+              </VStack>
+            )}
             <Flex gap={3} mt={6} justify="flex-end">
-              <Button
-                onClick={() => setIsSettingsOpen(false)}
-                bg="transparent"
-                color="white"
-                _hover={{ bg: '#3e3e3e' }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUpdatePlaylist}
-                bg="#1db954"
-                color="white"
-                _hover={{ bg: '#1ed760' }}
-              >
-                Save
-              </Button>
+              {showAddSongs ? (
+                <Button
+                  onClick={() => setShowAddSongs(false)}
+                  bg="transparent"
+                  color="white"
+                  _hover={{ bg: '#3e3e3e' }}
+                >
+                  Back
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setIsSettingsOpen(false)}
+                  bg="transparent"
+                  color="white"
+                  _hover={{ bg: '#3e3e3e' }}
+                >
+                  Cancel
+                </Button>
+              )}
+              {!showAddSongs && (
+                <Button
+                  onClick={handleUpdatePlaylist}
+                  bg="#1db954"
+                  color="white"
+                  _hover={{ bg: '#1ed760' }}
+                >
+                  Save
+                </Button>
+              )}
             </Flex>
           </Box>
         </Box>

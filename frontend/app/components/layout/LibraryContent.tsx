@@ -1,10 +1,12 @@
 'use client'
 
-import { Box, Text, VStack } from '@chakra-ui/react'
+import { Box, Text, VStack, Grid } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { authStorage } from '../../lib/auth'
+import { apiRequest } from '../../config/api'
 
 interface Song {
   id: string
@@ -16,15 +18,27 @@ interface Song {
   audio_url?: string
 }
 
+interface Playlist {
+  id: string
+  name: string
+  description: string
+  is_public: boolean
+  user_id: string
+  created_at: string
+}
+
 export function LibraryContent() {
+  const router = useRouter()
   const { playSong } = usePlayer()
   const [recentSongs, setRecentSongs] = useState<Song[]>([])
+  const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
     setIsAuthenticated(authStorage.isAuthenticated())
     loadRecentSongs()
+    loadPlaylists()
   }, [])
 
   const handleSongClick = (song: Song) => {
@@ -48,6 +62,18 @@ export function LibraryContent() {
       setRecentSongs([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadPlaylists = async () => {
+    const session = authStorage.getSession()
+    if (!session?.user?.id) return
+
+    try {
+      const response = await apiRequest(`/api/v1/playlists?user_id=${session.user.id}`)
+      setPlaylists(response.playlists || [])
+    } catch (error) {
+      console.error('Failed to load playlists:', error)
     }
   }
 
@@ -173,9 +199,71 @@ export function LibraryContent() {
 
         <VStack align="start" gap={4} w="full">
           <Text fontSize="2xl" fontWeight="bold" color="white">
-            Playlists
+            Your Playlists
           </Text>
-          <Text color="#a7a7a7">Coming soon...</Text>
+          {playlists.length > 0 ? (
+            <Grid
+              templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }}
+              gap={4}
+              w="full"
+            >
+              {playlists.map((playlist) => (
+                <Box
+                  key={playlist.id}
+                  bg="#181818"
+                  p={4}
+                  borderRadius="8px"
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  _hover={{ bg: '#282828' }}
+                  onClick={() => router.push(`/playlist/${playlist.id}`)}
+                >
+                  <Box
+                    w="full"
+                    h="150px"
+                    bg="#282828"
+                    borderRadius="8px"
+                    mb={3}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text color="#a7a7a7" fontSize="48px">
+                      ♪
+                    </Text>
+                  </Box>
+                  <Text
+                    color="white"
+                    fontWeight="bold"
+                    fontSize="16px"
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                  >
+                    {playlist.name}
+                  </Text>
+                  {playlist.description && (
+                    <Box
+                      color="#a7a7a7"
+                      fontSize="14px"
+                      mt={1}
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      display="-webkit-box"
+                      css={{
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}
+                    >
+                      {playlist.description}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Grid>
+          ) : (
+            <Text color="#a7a7a7">No playlists yet. Create your first playlist!</Text>
+          )}
         </VStack>
       </VStack>
     </Box>
