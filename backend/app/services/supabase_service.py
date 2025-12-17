@@ -40,3 +40,18 @@ class SupabaseService:
     
     def upload_cover(self, file_content: bytes, file_path: str, content_type: str):
         return self.client.upload_cover(file_content, file_path, content_type)
+    
+    def create_playlist(self, name: str, description: str, is_public: bool, user_id: str, song_ids: list = []):
+        return self.client.create_playlist(name, description, is_public, user_id, song_ids)
+    
+    def get_playlists(self, user_id: str = None, public_only: bool = False):
+        return self.client.get_playlists(user_id, public_only)
+    
+    def get_playlist_by_id(self, playlist_id: str):
+        return self.client.get_playlist_by_id(playlist_id)
+    
+    def update_playlist(self, playlist_id: str, name: str = None, description: str = None, is_public: bool = None):
+        return self.client.update_playlist(playlist_id, name, description, is_public)
+    
+    def remove_song_from_playlist(self, playlist_id: str, song_id: str):
+        return self.client.remove_song_from_playlist(playlist_id, song_id)

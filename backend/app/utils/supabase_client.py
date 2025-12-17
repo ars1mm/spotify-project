@@ -213,22 +213,22 @@ class SupabaseStorageClient:
             return {"error": str(e)}
     
     def search_songs(self, query: str, limit: int = 10) -> Dict:
-        """Search songs by title or artist"""
+        """Search songs and playlists by title, artist, or name"""
         try:
-            response = self.supabase.table("songs").select(
+            # Search songs
+            songs_response = self.supabase.table("songs").select(
                 "id, title, artist, album, duration_seconds, cover_image_url, file_path, created_at"
             ).or_(
                 f"title.ilike.%{query}%,artist.ilike.%{query}%,album.ilike.%{query}%"
             ).limit(limit).execute()
             
             songs = []
-            for song in response.data:
-                # Generate public URL for the audio file
+            for song in songs_response.data:
                 audio_url = None
                 if song.get('file_path'):
                     audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}"
                 
-                song_data = {
+                songs.append({
                     "id": song['id'],
                     "title": song['title'],
                     "artist": song['artist'],
@@ -237,12 +237,18 @@ class SupabaseStorageClient:
                     "cover_image_url": song.get('cover_image_url'),
                     "audio_url": audio_url,
                     "created_at": song['created_at']
-                }
-                songs.append(song_data)
+                })
             
-            return {"songs": songs, "total": len(songs)}
+            # Search playlists
+            playlists_response = self.supabase.table("playlists").select(
+                "id, name, description, is_public, user_id, created_at"
+            ).or_(
+                f"name.ilike.%{query}%,description.ilike.%{query}%"
+            ).eq("is_public", True).limit(limit).execute()
+            
+            return {"songs": songs, "playlists": playlists_response.data or [], "total": len(songs) + len(playlists_response.data or [])}
         except Exception as e:
-            return {"error": str(e), "songs": [], "total": 0}
+            return {"error": str(e), "songs": [], "playlists": [], "total": 0}
 
     def upload_file(self, file_content: bytes, file_path: str, content_type: str) -> str:
         """Upload file to Supabase Storage"""
@@ -318,3 +324,125 @@ class SupabaseStorageClient:
             import traceback
             traceback.print_exc()
             raise e
+    
+    def create_playlist(self, name: str, description: str, is_public: bool, user_id: str, song_ids: list = []) -> dict:
+        """Create a new playlist"""
+        try:
+            response = self.supabase.table("playlists").insert({
+                "name": name,
+                "description": description,
+                "is_public": is_public,
+                "user_id": user_id
+            }).execute()
+            
+            if response.data:
+                playlist_id = response.data[0]['id']
+                
+                # Add songs to playlist if provided
+                if song_ids:
+                    for idx, song_id in enumerate(song_ids):
+                        self.supabase.table("playlist_songs").insert({
+                            "playlist_id": playlist_id,
+                            "song_id": song_id,
+                            "position": idx
+                        }).execute()
+                
+                return {"success": True, "playlist": response.data[0]}
+            return {"error": "Failed to create playlist"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def get_playlists(self, user_id: str = None, public_only: bool = False) -> dict:
+        """Get playlists"""
+        try:
+            query = self.supabase.table("playlists").select("*")
+            
+            if public_only:
+                query = query.eq("is_public", True)
+            elif user_id:
+                query = query.eq("user_id", user_id)
+            
+            response = query.order("created_at", desc=True).execute()
+            return {"playlists": response.data}
+        except Exception as e:
+            return {"error": str(e), "playlists": []}
+    
+    def get_playlist_by_id(self, playlist_id: str) -> dict:
+        """Get a specific playlist with its songs"""
+        try:
+            # Get playlist info
+            playlist_response = self.supabase.table("playlists").select("*").eq("id", playlist_id).execute()
+            
+            if not playlist_response.data:
+                return {"error": "Playlist not found"}
+            
+            playlist = playlist_response.data[0]
+            
+            # Get user name from Supabase Auth using service role
+            try:
+                admin_client = get_supabase_admin_client()
+                user = admin_client.auth.admin.get_user_by_id(playlist['user_id'])
+                if user and user.user:
+                    user_name = user.user.user_metadata.get('name') or user.user.email.split('@')[0]
+                    playlist['users'] = {"name": user_name}
+            except Exception as e:
+                # Fallback: try custom users table
+                user_response = self.supabase.table("users").select("name").eq("id", playlist['user_id']).execute()
+                if user_response.data and user_response.data[0].get('name'):
+                    playlist['users'] = {"name": user_response.data[0]['name']}
+            
+            # Get songs in playlist
+            songs_response = self.supabase.table("playlist_songs").select(
+                "*, songs(*)"
+            ).eq("playlist_id", playlist_id).order("position").execute()
+            
+            # Format songs with audio URLs
+            songs = []
+            for item in songs_response.data:
+                song = item['songs']
+                audio_url = None
+                if song.get('file_path'):
+                    audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}"
+                
+                songs.append({
+                    "id": song['id'],
+                    "title": song['title'],
+                    "artist": song['artist'],
+                    "album": song.get('album'),
+                    "duration_seconds": song.get('duration_seconds'),
+                    "cover_image_url": song.get('cover_image_url'),
+                    "audio_url": audio_url
+                })
+            
+            return {
+                "playlist": playlist,
+                "songs": songs
+            }
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def update_playlist(self, playlist_id: str, name: str = None, description: str = None, is_public: bool = None) -> dict:
+        """Update playlist details"""
+        try:
+            update_data = {}
+            if name is not None:
+                update_data['name'] = name
+            if description is not None:
+                update_data['description'] = description
+            if is_public is not None:
+                update_data['is_public'] = is_public
+            
+            response = self.supabase.table("playlists").update(update_data).eq("id", playlist_id).execute()
+            if response.data:
+                return {"success": True, "playlist": response.data[0]}
+            return {"error": "Failed to update playlist"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def remove_song_from_playlist(self, playlist_id: str, song_id: str) -> dict:
+        """Remove a song from playlist"""
+        try:
+            self.supabase.table("playlist_songs").delete().eq("playlist_id", playlist_id).eq("song_id", song_id).execute()
+            return {"success": True, "message": "Song removed from playlist"}
+        except Exception as e:
+            return {"error": str(e)}

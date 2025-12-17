@@ -138,5 +138,77 @@ def search_songs(q: str, limit: int = 10):
         raise HTTPException(status_code=500, detail=result["error"])
     return result
 
+class CreatePlaylistRequest(BaseModel):
+    name: str
+    description: str = ""
+    is_public: bool = True
+    user_id: str
+    song_ids: list = []
+
+@router.post("/playlists", tags=["playlists"])
+def create_playlist(request: CreatePlaylistRequest):
+    """
+    Create a new playlist
+    """
+    # Use service role for playlist creation to bypass RLS
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.create_playlist(
+        name=request.name,
+        description=request.description,
+        is_public=request.is_public,
+        user_id=request.user_id,
+        song_ids=request.song_ids
+    )
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.get("/playlists", tags=["playlists"])
+def get_playlists(user_id: str = None, public_only: bool = False):
+    """
+    Get playlists
+    """
+    result = supabase_service.get_playlists(user_id=user_id, public_only=public_only)
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
+
+@router.get("/playlists/{playlist_id}", tags=["playlists"])
+def get_playlist(playlist_id: str):
+    """
+    Get a specific playlist with its songs
+    """
+    result = supabase_service.get_playlist_by_id(playlist_id)
+    if result.get("error"):
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+class UpdatePlaylistRequest(BaseModel):
+    name: str = None
+    description: str = None
+    is_public: bool = None
+
+@router.put("/playlists/{playlist_id}", tags=["playlists"])
+def update_playlist(playlist_id: str, request: UpdatePlaylistRequest):
+    """
+    Update playlist details
+    """
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.update_playlist(playlist_id, request.name, request.description, request.is_public)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.delete("/playlists/{playlist_id}/songs/{song_id}", tags=["playlists"])
+def remove_song_from_playlist(playlist_id: str, song_id: str):
+    """
+    Remove a song from playlist
+    """
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.remove_song_from_playlist(playlist_id, song_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
 # Upload endpoint moved to admin routes (/api/v1/admin/songs/upload)
 # This ensures only authenticated admins can upload songs

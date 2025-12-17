@@ -23,6 +23,11 @@ export const authStorage = {
     return stored ? JSON.parse(stored) : null;
   },
   
+  getUser: (): User | null => {
+    const session = authStorage.getSession();
+    return session?.user || null;
+  },
+  
   clearSession: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('spotify_session');
