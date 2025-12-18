@@ -61,3 +61,15 @@ class SupabaseService:
     
     def get_unique_artists(self):
         return self.client.get_unique_artists()
+    
+    def like_song(self, user_id: str, song_id: str):
+        return self.client.like_song(user_id, song_id)
+    
+    def unlike_song(self, user_id: str, song_id: str):
+        return self.client.unlike_song(user_id, song_id)
+    
+    def get_liked_songs(self, user_id: str):
+        return self.client.get_liked_songs(user_id)
+    
+    def is_song_liked(self, user_id: str, song_id: str):
+        return self.client.is_song_liked(user_id, song_id)

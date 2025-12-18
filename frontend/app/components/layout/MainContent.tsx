@@ -43,6 +43,8 @@ export function MainContent() {
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null)
   const [selectedMix, setSelectedMix] = useState<string | null>(null)
   const [mixSongs, setMixSongs] = useState<Song[]>([])
+  const [likedSongs, setLikedSongs] = useState<Song[]>([])
+  const [showLikedSongs, setShowLikedSongs] = useState(false)
 
   const dailyMixCovers = useMemo(() => {
     if (allSongs.length === 0) return { mix1: null, mix2: null }
@@ -70,7 +72,22 @@ export function MainContent() {
 
     // Load all songs on mount
     loadAllSongs()
+    if (isAuthenticated) {
+      loadLikedSongs()
+    }
   }, [])
+
+  const loadLikedSongs = async () => {
+    const session = authStorage.getSession()
+    if (!session?.user?.id) return
+
+    try {
+      const response = await apiRequest(`/api/v1/songs/liked?user_id=${session.user.id}`)
+      setLikedSongs(response.songs || [])
+    } catch (error) {
+      console.error('Failed to load liked songs:', error)
+    }
+  }
 
   const handleSongClick = (song: Song) => {
     if (!isAuthenticated) {
@@ -349,7 +366,59 @@ export function MainContent() {
           {songsLoading ? (
             <Text color="#a7a7a7">Loading...</Text>
           ) : allSongs.length > 0 ? (
-            selectedArtist || selectedMix ? (
+            showLikedSongs ? (
+                <VStack align="start" gap={4} w="full">
+                  <Button
+                    onClick={() => setShowLikedSongs(false)}
+                    bg="transparent"
+                    color="#1db954"
+                    _hover={{ color: '#1ed760' }}
+                    p={0}
+                    fontSize="sm"
+                  >
+                    ← Back to playlists
+                  </Button>
+                  {likedSongs.length > 0 ? (
+                    <VStack align="start" gap={0} w="full">
+                      {likedSongs.map((song, index) => (
+                        <Box
+                          key={song.id}
+                          display="flex"
+                          alignItems="center"
+                          p={2}
+                          w="full"
+                          _hover={{ bg: '#1a1a1a' }}
+                          borderRadius="4px"
+                          cursor="pointer"
+                          transition="all 0.1s ease"
+                          onClick={() => handleSongClick(song)}
+                        >
+                          <Text color="#a7a7a7" fontSize="16px" w="40px" textAlign="center">{index + 1}</Text>
+                          <Box w="40px" h="40px" bg="#282828" borderRadius="4px" mr={3} display="flex" alignItems="center" justifyContent="center">
+                            {song.cover_image_url ? (
+                              <img src={song.cover_image_url} alt={song.title} style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                            ) : (
+                              <Text color="#a7a7a7" fontSize="12px">♪</Text>
+                            )}
+                          </Box>
+                          <Box flex="1">
+                            <Text color="white" fontWeight="400" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{song.title}</Text>
+                            <Text color="#a7a7a7" fontSize="14px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{song.artist}</Text>
+                          </Box>
+                          <Text color="#a7a7a7" fontSize="14px" mr={4} minW="120px" display={{ base: "none", md: "block" }} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                            {song.album && song.album !== 'Unknown' ? song.album : song.artist}
+                          </Text>
+                          <Text color="#a7a7a7" fontSize="14px" minW="50px" textAlign="right" display={{ base: "none", md: "block" }}>
+                            {song.duration_seconds ? `${Math.floor(song.duration_seconds / 60)}:${(song.duration_seconds % 60).toString().padStart(2, '0')}` : '--:--'}
+                          </Text>
+                        </Box>
+                      ))}
+                    </VStack>
+                  ) : (
+                    <Text color="#a7a7a7">No liked songs yet. Start liking songs!</Text>
+                  )}
+                </VStack>
+            ) : selectedArtist || selectedMix ? (
                 <VStack align="start" gap={4} w="full">
                   <Button
                     onClick={() => { setSelectedArtist(null); setSelectedMix(null); }}
@@ -399,6 +468,28 @@ export function MainContent() {
                 </VStack>
             ) : (
               <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4} w="full">
+                {/* Liked Songs */}
+                {isAuthenticated && likedSongs.length > 0 && (
+                  <Box
+                    bg="linear-gradient(135deg, #450af5, #c4efd9)"
+                    p={4}
+                    borderRadius="8px"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{ transform: 'scale(1.02)' }}
+                    onClick={() => setShowLikedSongs(true)}
+                  >
+                    <Box w="full" h="150px" display="flex" alignItems="center" justifyContent="center" mb={3}>
+                      <Text fontSize="64px">💜</Text>
+                    </Box>
+                    <Text color="white" fontWeight="bold" fontSize="16px">
+                      Liked Songs
+                    </Text>
+                    <Text color="white" fontSize="14px" mt={1}>
+                      {likedSongs.length} songs
+                    </Text>
+                  </Box>
+                )}
                 {/* Daily Mix 1 */}
                 <Box
                   bg="#181818"

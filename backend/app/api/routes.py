@@ -221,5 +221,37 @@ def add_song_to_playlist(playlist_id: str, song_id: str):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
+@router.get("/songs/liked", tags=["songs"])
+def get_liked_songs(user_id: str):
+    """Get user's liked songs"""
+    result = supabase_service.get_liked_songs(user_id)
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
+
+@router.post("/songs/{song_id}/like", tags=["songs"])
+def like_song(song_id: str, user_id: str):
+    """Like a song"""
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.like_song(user_id, song_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.delete("/songs/{song_id}/like", tags=["songs"])
+def unlike_song(song_id: str, user_id: str):
+    """Unlike a song"""
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.unlike_song(user_id, song_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@router.get("/songs/{song_id}/liked", tags=["songs"])
+def check_song_liked(song_id: str, user_id: str):
+    """Check if song is liked"""
+    is_liked = supabase_service.is_song_liked(user_id, song_id)
+    return {"is_liked": is_liked}
+
 # Upload endpoint moved to admin routes (/api/v1/admin/songs/upload)
 # This ensures only authenticated admins can upload songs

@@ -56,7 +56,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const updateTime = () => setCurrentTime(audio.currentTime)
     const updateDuration = () => setDuration(audio.duration)
-    const handleEnded = () => setIsPlaying(false)
+    const handleEnded = () => {
+      setIsPlaying(false)
+      // playNext()
+    }
     const handleError = (e: Event) => {
       console.error('Audio error for song:', currentSong?.title, e)
       console.error('Failed audio URL:', currentSong?.audio_url)
@@ -146,6 +149,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }
 
   const playNext = () => {
+    try {
+      const playlist = localStorage.getItem('currentPlaylist')
+      if (playlist) {
+        const songs: Song[] = JSON.parse(playlist)
+        const currentIdx = songs.findIndex(s => s.id === currentSong?.id)
+        if (currentIdx !== -1) {
+          const nextIdx = currentIdx < songs.length - 1 ? currentIdx + 1 : 0
+          playSong(songs[nextIdx])
+          return
+        }
+      }
+    } catch {}
+    
     if (currentIndex < songHistory.length - 1) {
       const nextSong = songHistory[currentIndex + 1]
       setCurrentIndex(currentIndex + 1)
@@ -155,6 +171,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }
 
   const playPrevious = () => {
+    try {
+      const playlist = localStorage.getItem('currentPlaylist')
+      if (playlist) {
+        const songs: Song[] = JSON.parse(playlist)
+        const currentIdx = songs.findIndex(s => s.id === currentSong?.id)
+        if (currentIdx !== -1) {
+          const prevIdx = currentIdx > 0 ? currentIdx - 1 : songs.length - 1
+          playSong(songs[prevIdx])
+          return
+        }
+      }
+    } catch {}
+    
     if (currentIndex > 0) {
       const prevSong = songHistory[currentIndex - 1]
       setCurrentIndex(currentIndex - 1)
@@ -163,8 +192,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const hasNext = currentIndex < songHistory.length - 1
-  const hasPrevious = currentIndex > 0
+  const hasNext = (() => {
+    try {
+      const playlist = localStorage.getItem('currentPlaylist')
+      if (playlist && currentSong) {
+        const songs: Song[] = JSON.parse(playlist)
+        return songs.length > 0
+      }
+    } catch {}
+    return currentIndex < songHistory.length - 1
+  })()
+  
+  const hasPrevious = (() => {
+    try {
+      const playlist = localStorage.getItem('currentPlaylist')
+      if (playlist && currentSong) {
+        const songs: Song[] = JSON.parse(playlist)
+        return songs.length > 0
+      }
+    } catch {}
+    return currentIndex > 0
+  })()
 
   return (
     <PlayerContext.Provider value={{

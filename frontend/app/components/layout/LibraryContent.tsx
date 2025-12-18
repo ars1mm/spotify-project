@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Text, VStack, Grid } from '@chakra-ui/react'
+import { Box, Text, VStack, HStack, Grid } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -31,13 +31,16 @@ export function LibraryContent() {
   const router = useRouter()
   const { playSong } = usePlayer()
   const [recentSongs, setRecentSongs] = useState<Song[]>([])
+  const [likedSongs, setLikedSongs] = useState<Song[]>([])
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [activeTab, setActiveTab] = useState<'recent' | 'liked'>('recent')
 
   useEffect(() => {
     setIsAuthenticated(authStorage.isAuthenticated())
     loadRecentSongs()
+    loadLikedSongs()
     loadPlaylists()
   }, [])
 
@@ -65,6 +68,18 @@ export function LibraryContent() {
     }
   }
 
+  const loadLikedSongs = async () => {
+    const session = authStorage.getSession()
+    if (!session?.user?.id) return
+
+    try {
+      const response = await apiRequest(`/api/v1/songs/liked?user_id=${session.user.id}`)
+      setLikedSongs(response.songs || [])
+    } catch (error) {
+      console.error('Failed to load liked songs:', error)
+    }
+  }
+
   const loadPlaylists = async () => {
     const session = authStorage.getSession()
     if (!session?.user?.id) return
@@ -85,12 +100,33 @@ export function LibraryContent() {
         </Text>
 
         <VStack align="start" gap={4} w="full">
-          <Text fontSize="2xl" fontWeight="bold" color="white">
-            Recent Songs
-          </Text>
+          <HStack gap={4}>
+            <Text
+              fontSize="2xl"
+              fontWeight="bold"
+              color={activeTab === 'recent' ? 'white' : '#a7a7a7'}
+              cursor="pointer"
+              onClick={() => setActiveTab('recent')}
+              borderBottom={activeTab === 'recent' ? '2px solid #1DB954' : 'none'}
+              pb={1}
+            >
+              Recent Songs
+            </Text>
+            <Text
+              fontSize="2xl"
+              fontWeight="bold"
+              color={activeTab === 'liked' ? 'white' : '#a7a7a7'}
+              cursor="pointer"
+              onClick={() => setActiveTab('liked')}
+              borderBottom={activeTab === 'liked' ? '2px solid #1DB954' : 'none'}
+              pb={1}
+            >
+              Liked Songs
+            </Text>
+          </HStack>
           {loading ? (
             <Text color="#a7a7a7">Loading...</Text>
-          ) : recentSongs.length > 0 ? (
+          ) : activeTab === 'recent' && recentSongs.length > 0 ? (
             <VStack align="start" gap={0} w="full">
               {recentSongs.map((song, index: number) => (
                 <Box
@@ -192,8 +228,112 @@ export function LibraryContent() {
                 </Box>
               ))}
             </VStack>
+          ) : activeTab === 'liked' && likedSongs.length > 0 ? (
+            <VStack align="start" gap={0} w="full">
+              {likedSongs.map((song, index: number) => (
+                <Box
+                  key={song.id}
+                  display="flex"
+                  alignItems="center"
+                  p={2}
+                  w="full"
+                  _hover={{ bg: '#1a1a1a' }}
+                  borderRadius="4px"
+                  cursor="pointer"
+                  transition="all 0.1s ease"
+                  onClick={() => handleSongClick(song)}
+                >
+                  <Text
+                    color="#a7a7a7"
+                    fontSize="16px"
+                    w="40px"
+                    textAlign="center"
+                  >
+                    {index + 1}
+                  </Text>
+                  <Box
+                    w="40px"
+                    h="40px"
+                    bg="#282828"
+                    borderRadius="4px"
+                    mr={3}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    {song.cover_image_url ? (
+                      <img
+                        src={song.cover_image_url}
+                        alt={song.title}
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '4px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Text color="#a7a7a7" fontSize="12px">
+                        ♪
+                      </Text>
+                    )}
+                  </Box>
+                  <Box flex="1" minW="0" maxW={{ base: "none", md: "300px" }}>
+                    <Text
+                      color="white"
+                      fontWeight="400"
+                      fontSize="16px"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {song.title}
+                    </Text>
+                    <Text
+                      color="#a7a7a7"
+                      fontSize="14px"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {song.artist}
+                    </Text>
+                  </Box>
+                  <Text
+                    color="#a7a7a7"
+                    fontSize="14px"
+                    mr={4}
+                    minW="200px"
+                    display={{ base: "none", md: "block" }}
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                  >
+                    {song.album && song.album !== 'Unknown' ? song.album : song.artist}
+                  </Text>
+                  <Text
+                    color="#a7a7a7"
+                    fontSize="14px"
+                    minW="60px"
+                    textAlign="right"
+                    display={{ base: "none", md: "block" }}
+                    mr={4}
+                  >
+                    {song.duration_seconds
+                      ? `${Math.floor(song.duration_seconds / 60)}:${(
+                          song.duration_seconds % 60
+                        )
+                          .toString()
+                          .padStart(2, '0')}`
+                      : '--:--'}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
           ) : (
-            <Text color="#a7a7a7">No songs in your library yet.</Text>
+            <Text color="#a7a7a7">
+              {activeTab === 'recent' ? 'No songs in your library yet.' : 'No liked songs yet.'}
+            </Text>
           )}
         </VStack>
 

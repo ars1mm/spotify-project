@@ -77,7 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <VStack align="start" gap={4} w="full" mt={8}>
           <NavItem icon={FiPlus} label="Create Playlist" href="/playlist/create" />
-          <NavItem icon={FiHeart} label="Liked Songs" href="/liked" />
+          <NavItem icon={FiHeart} label="Liked Songs" href="/library" />
         </VStack>
 
         {playlists.length > 0 && (

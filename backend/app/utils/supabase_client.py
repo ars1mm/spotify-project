@@ -355,14 +355,13 @@ class SupabaseStorageClient:
     def get_playlists(self, user_id: str = None, public_only: bool = False) -> dict:
         """Get playlists"""
         try:
-            query = self.supabase.table("playlists").select("*")
-            
             if public_only:
-                query = query.eq("is_public", True)
+                response = self.supabase.table("playlists").select("*").eq("is_public", True).order("created_at", desc=True).execute()
             elif user_id:
-                query = query.eq("user_id", user_id)
+                response = self.supabase.table("playlists").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+            else:
+                response = self.supabase.table("playlists").select("*").order("created_at", desc=True).execute()
             
-            response = query.order("created_at", desc=True).execute()
             return {"playlists": response.data}
         except Exception as e:
             return {"error": str(e), "playlists": []}
@@ -472,3 +471,51 @@ class SupabaseStorageClient:
         except Exception as e:
             print(f"Error fetching artists: {str(e)}")
             return []
+    
+    def like_song(self, user_id: str, song_id: str) -> dict:
+        """Like a song"""
+        try:
+            response = self.supabase.table("liked_songs").insert({
+                "user_id": user_id,
+                "song_id": song_id
+            }).execute()
+            return {"success": True, "message": "Song liked"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def unlike_song(self, user_id: str, song_id: str) -> dict:
+        """Unlike a song"""
+        try:
+            self.supabase.table("liked_songs").delete().eq("user_id", user_id).eq("song_id", song_id).execute()
+            return {"success": True, "message": "Song unliked"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def get_liked_songs(self, user_id: str) -> dict:
+        """Get user's liked songs"""
+        try:
+            response = self.supabase.table("liked_songs").select("*, songs(*)").eq("user_id", user_id).order("created_at", desc=True).execute()
+            songs = []
+            for item in response.data:
+                song = item['songs']
+                audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}" if song.get('file_path') else None
+                songs.append({
+                    "id": song['id'],
+                    "title": song['title'],
+                    "artist": song['artist'],
+                    "album": song.get('album'),
+                    "duration_seconds": song.get('duration_seconds'),
+                    "cover_image_url": song.get('cover_image_url'),
+                    "audio_url": audio_url
+                })
+            return {"songs": songs}
+        except Exception as e:
+            return {"error": str(e), "songs": []}
+    
+    def is_song_liked(self, user_id: str, song_id: str) -> bool:
+        """Check if song is liked by user"""
+        try:
+            response = self.supabase.table("liked_songs").select("id").eq("user_id", user_id).eq("song_id", song_id).execute()
+            return len(response.data) > 0
+        except:
+            return False

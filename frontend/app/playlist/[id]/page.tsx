@@ -4,6 +4,7 @@ import { Box, VStack, Text, Flex, IconButton, Button, Input, Textarea } from '@c
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { FiPlay, FiShuffle } from 'react-icons/fi'
 import { Sidebar } from '../../components/navigation/Sidebar'
 import { Player } from '../../components/player/Player'
 import { AuthButtons } from '../../components/auth/AuthButtons'
@@ -50,6 +51,7 @@ export default function PlaylistPage() {
   const [showAddSongs, setShowAddSongs] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [isShuffled, setIsShuffled] = useState(false)
   const currentUserId = authStorage.getUser()?.id
 
   useEffect(() => {
@@ -229,6 +231,44 @@ export default function PlaylistPage() {
                     </Flex>
                   </Box>
                 </Flex>
+
+              <Flex gap={4} mb={4} align="center">
+                <Button
+                  bg="#1db954"
+                  color="white"
+                  _hover={{ bg: '#1ed760', transform: 'scale(1.05)' }}
+                  size="lg"
+                  borderRadius="full"
+                  onClick={() => {
+                    if (songs.length > 0) {
+                      const playlistSongs = isShuffled ? [...songs].sort(() => Math.random() - 0.5) : songs
+                      localStorage.setItem('currentPlaylist', JSON.stringify(playlistSongs))
+                      handleSongClick(playlistSongs[0])
+                    }
+                  }}
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                >
+                  <FiPlay />
+                  Play
+                </Button>
+                <Button
+                  bg={isShuffled ? '#1db954' : 'transparent'}
+                  border={isShuffled ? 'none' : '1px solid #535353'}
+                  color="white"
+                  _hover={{ bg: isShuffled ? '#1ed760' : '#282828', borderColor: '#b3b3b3' }}
+                  size="lg"
+                  borderRadius="full"
+                  onClick={() => setIsShuffled(!isShuffled)}
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                >
+                  <FiShuffle />
+                  {isShuffled ? 'Shuffled' : 'Shuffle'}
+                </Button>
+              </Flex>
 
               <VStack align="start" gap={0} w="full">
                 {songs.length > 0 ? (

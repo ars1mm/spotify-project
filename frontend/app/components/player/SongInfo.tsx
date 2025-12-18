@@ -2,10 +2,64 @@
 
 import { Box, Text, Button } from '@chakra-ui/react';
 import { FiHeart } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 import { usePlayer } from '../../contexts/PlayerContext';
+import { authStorage } from '../../lib/auth';
+import { apiRequest } from '../../config/api';
+import toast from 'react-hot-toast';
 
 export function SongInfo() {
   const { currentSong } = usePlayer();
+  const [isLiked, setIsLiked] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentSong?.id) {
+      checkIfLiked();
+    }
+  }, [currentSong?.id]);
+
+  const checkIfLiked = async () => {
+    const session = authStorage.getSession();
+    if (!session?.user?.id || !currentSong?.id) return;
+
+    try {
+      const response = await apiRequest(`/api/v1/songs/${currentSong.id}/liked?user_id=${session.user.id}`);
+      setIsLiked(response.is_liked);
+    } catch (error) {
+      console.error('Failed to check if song is liked:', error);
+    }
+  };
+
+  const toggleLike = async () => {
+    const session = authStorage.getSession();
+    if (!session?.user?.id) {
+      toast.error('Please log in to like songs');
+      return;
+    }
+    if (!currentSong?.id) return;
+
+    setLoading(true);
+    try {
+      if (isLiked) {
+        await apiRequest(`/api/v1/songs/${currentSong.id}/like?user_id=${session.user.id}`, {
+          method: 'DELETE',
+        });
+        setIsLiked(false);
+        toast.success('Removed from liked songs');
+      } else {
+        await apiRequest(`/api/v1/songs/${currentSong.id}/like?user_id=${session.user.id}`, {
+          method: 'POST',
+        });
+        setIsLiked(true);
+        toast.success('Added to liked songs');
+      }
+    } catch (error) {
+      toast.error('Failed to update liked status');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!currentSong) {
     return (
@@ -55,8 +109,16 @@ export function SongInfo() {
           {currentSong.artist}
         </Text>
       </Box>
-      <Button display={{ base: "none", md: "flex" }} variant="ghost" color="#B3B3B3" _hover={{ color: 'white' }} flexShrink={0}>
-        <FiHeart />
+      <Button 
+        display={{ base: "none", md: "flex" }} 
+        variant="ghost" 
+        color={isLiked ? '#1DB954' : '#B3B3B3'} 
+        _hover={{ color: isLiked ? '#1ed760' : 'white' }} 
+        flexShrink={0}
+        onClick={toggleLike}
+        disabled={loading}
+      >
+        <FiHeart fill={isLiked ? 'currentColor' : 'none'} />
       </Button>
     </Box>
   );
