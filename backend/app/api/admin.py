@@ -1,13 +1,72 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Dict, Any
 from app.services.admin_service import AdminService
 from app.services.supabase_service import SupabaseService
-from app.middleware.admin_auth import verify_admin_token
+from app.middleware.admin_auth import verify_admin_token, verify_admin_key, get_admin_key, get_key_expiry_info, rotate_admin_key
 from app.schemas.upload import SongUploadRequest
 import uuid
 import base64
 
+# Public router for admin login (no auth required)
+public_router = APIRouter(prefix="/admin", tags=["admin-auth"])
+
+@public_router.get("/login")
+async def admin_login(key: str = Query(..., description="The SHA-256 admin key")):
+    """
+    Admin login endpoint - validates the provided SHA-256 key
+    Usage: /api/v1/admin/login?key={your_sha256_key}
+    """
+    if verify_admin_key(key):
+        expiry_info = get_key_expiry_info()
+        return {
+            "success": True,
+            "message": "Admin authentication successful",
+            "token": key,  # Return the key as the bearer token to use
+            "key_expiry": expiry_info
+        }
+    
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid admin key"
+    )
+
+@public_router.get("/key-hint")
+async def get_key_hint():
+    """
+    Returns a hint about where to find the admin key (for development only).
+    In production, this should be disabled or removed.
+    """
+    expiry_info = get_key_expiry_info()
+    return {
+        "message": "The admin key is printed in the backend console on startup. Look for '🔐 ADMIN KEY ROTATED:'",
+        "hint": "Check the terminal where uvicorn is running",
+        "key_expiry": expiry_info
+    }
+
+# Protected router for admin operations (requires auth)
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(verify_admin_token)])
+
+@router.post("/key/rotate")
+async def force_rotate_key():
+    """
+    Force rotate the admin key immediately.
+    Returns the new key. Use this if you suspect the key has been compromised.
+    """
+    new_key = rotate_admin_key()
+    expiry_info = get_key_expiry_info()
+    return {
+        "success": True,
+        "message": "Admin key rotated successfully",
+        "new_key": new_key,
+        "key_expiry": expiry_info
+    }
+
+@router.get("/key/status")
+async def get_key_status():
+    """
+    Get the current admin key's expiry status.
+    """
+    return get_key_expiry_info()
 
 def get_admin_service() -> AdminService:
     return AdminService()

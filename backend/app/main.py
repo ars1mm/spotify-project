@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
-from app.api.admin import router as admin_router
+from app.api.admin import router as admin_router, public_router as admin_public_router
 from app.core.config import settings
 from app.core.rate_limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -35,10 +35,15 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(router, prefix="/api/v1")
-app.include_router(admin_router, prefix="/api/v1")
+app.include_router(admin_public_router, prefix="/api/v1")  # Public admin routes (login)
+app.include_router(admin_router, prefix="/api/v1")  # Protected admin routes
 
 @app.on_event("startup")
 async def startup_event():
+    # Generate admin key on startup
+    from app.middleware.admin_auth import get_admin_key
+    admin_key = get_admin_key()
+    
     host = os.getenv("HOST", "127.0.0.1")
     port = os.getenv("PORT", "8000")
     env = os.getenv("APP_ENV", "development")
@@ -52,6 +57,7 @@ async def startup_event():
     logging.info(f"[*]Environment: {env}")
     logging.info(f"[*]Server: http://{display_host}:{port}")
     logging.info(f"[*]Docs: http://{display_host}:{port}/docs")
+    logging.info(f"[*]Admin Login: http://{display_host}:{port}/api/v1/admin/login?key={{YOUR_KEY}}")
 
 @app.get("/", tags=["health"])
 @limiter.limit("60/30seconds")
