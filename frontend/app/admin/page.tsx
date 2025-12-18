@@ -12,7 +12,7 @@ import {
   // IconButton,
   useDisclosure,
 } from '@chakra-ui/react'
-import { FiTrash2 } from 'react-icons/fi'
+import { FiTrash2, FiLock, FiRefreshCw } from 'react-icons/fi'
 
 interface Song {
   id: string
@@ -34,6 +34,13 @@ interface ExistingSong {
   file_path: string
   cover_image_url: string
   created_at: string
+}
+
+interface KeyExpiryInfo {
+  expired: boolean
+  expires_at: string
+  seconds_remaining: number
+  rotation_interval_seconds: number
 }
 
 const GENRES = [
@@ -59,8 +66,21 @@ const GENRES = [
   'Trap',
 ]
 
+// Use the same API URL logic as the rest of the app
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' && process.env.NODE_ENV === 'production'
+    ? 'https://spotify-project-achx.onrender.com'
+    : 'http://127.0.0.1:8000')
+
 export default function AdminDashboard() {
-  const adminToken = 'admin-secret-key-123'
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [adminToken, setAdminToken] = useState('')
+  const [loginKey, setLoginKey] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [keyExpiry, setKeyExpiry] = useState<KeyExpiryInfo | null>(null)
+
   const [toastMessage, setToastMessage] = useState<{
     type: string
     text: string
@@ -88,19 +108,99 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false)
   const [logs, setLogs] = useState<string[]>([])
 
+  // Check for saved token on mount
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem('adminToken')
+    if (savedToken) {
+      validateToken(savedToken)
+    }
+  }, [])
+
+  const validateToken = async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/key/status`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (!data.expired) {
+          setAdminToken(token)
+          setIsAuthenticated(true)
+          setKeyExpiry(data)
+          return true
+        }
+      }
+      // Token invalid or expired
+      sessionStorage.removeItem('adminToken')
+      setIsAuthenticated(false)
+      return false
+    } catch {
+      sessionStorage.removeItem('adminToken')
+      setIsAuthenticated(false)
+      return false
+    }
+  }
+
+  const handleLogin = async () => {
+    if (!loginKey.trim()) {
+      setLoginError('Please enter the admin key')
+      return
+    }
+
+    setLoginLoading(true)
+    setLoginError('')
+
+    try {
+      console.log('Attempting login to:', `${API_URL}/api/v1/admin/login`)
+      const response = await fetch(
+        `${API_URL}/api/v1/admin/login?key=${encodeURIComponent(loginKey)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setAdminToken(data.token)
+        setKeyExpiry(data.key_expiry)
+        setIsAuthenticated(true)
+        sessionStorage.setItem('adminToken', data.token)
+        setLoginKey('')
+      } else {
+        const error = await response.json()
+        setLoginError(error.detail || 'Invalid admin key')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setLoginError(`Failed to connect to server at ${API_URL}. Make sure the backend is running.`)
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setAdminToken('')
+    setIsAuthenticated(false)
+    setKeyExpiry(null)
+    sessionStorage.removeItem('adminToken')
+  }
+
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString()
     setLogs((prev) => [`[${timestamp}] ${message}`, ...prev].slice(0, 100))
   }
 
   const fetchSongs = async () => {
+    if (!adminToken) return
+    
     try {
-      const apiUrl =
-        process.env.NODE_ENV === 'production'
-          ? 'https://spotify-project-achx.onrender.com'
-          : 'http://127.0.0.1:8000'
-
-      const response = await fetch(`${apiUrl}/api/v1/admin/songs`, {
+      const response = await fetch(`${API_URL}/api/v1/admin/songs`, {
         headers: {
           Authorization: `Bearer ${adminToken}`,
         },
@@ -109,20 +209,20 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json()
         setExistingSongs(data.songs || [])
+      } else if (response.status === 401) {
+        handleLogout()
+        setLoginError('Session expired. Please login again.')
       }
     } catch {
-      console.error('Failed to fetch songs:')
+      console.error('Failed to fetch songs')
     }
   }
 
   const deleteSong = async (songId: string) => {
+    if (!adminToken) return
+    
     try {
-      const apiUrl =
-        process.env.NODE_ENV === 'production'
-          ? 'https://spotify-project-achx.onrender.com'
-          : 'http://127.0.0.1:8000'
-
-      const response = await fetch(`${apiUrl}/api/v1/admin/songs/${songId}`, {
+      const response = await fetch(`${API_URL}/api/v1/admin/songs/${songId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${adminToken}`,
@@ -133,13 +233,16 @@ export default function AdminDashboard() {
         setToastMessage({ type: 'success', text: 'Song deleted successfully' })
         setTimeout(() => setToastMessage(null), 3000)
         fetchSongs() // Refresh the list
+      } else if (response.status === 401) {
+        handleLogout()
+        setLoginError('Session expired. Please login again.')
       } else {
         throw new Error('Failed to delete song')
       }
-    } catch  {
-        setToastMessage({ type: 'error', text: 'Failed to delete song' })
-        setTimeout(() => setToastMessage(null), 3000)
-        console.error('Error deleting song:')
+    } catch {
+      setToastMessage({ type: 'error', text: 'Failed to delete song' })
+      setTimeout(() => setToastMessage(null), 3000)
+      console.error('Error deleting song')
     }
   }
 
@@ -157,10 +260,11 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (activeTab === 'manage') {
+    if (activeTab === 'manage' && isAuthenticated && adminToken) {
       fetchSongs()
     }
-  }, [activeTab])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAuthenticated, adminToken])
 
   const addSong = () => {
     setSongs([
@@ -252,12 +356,7 @@ export default function AdminDashboard() {
       file_content: fileBase64,
     }
 
-    const apiUrl =
-      process.env.NODE_ENV === 'production'
-        ? 'https://spotify-project-achx.onrender.com'
-        : 'http://127.0.0.1:8000'
-
-    const response = await fetch(`${apiUrl}/api/v1/admin/songs/upload`, {
+    const response = await fetch(`${API_URL}/api/v1/admin/songs/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -265,6 +364,11 @@ export default function AdminDashboard() {
       },
       body: JSON.stringify(payload),
     })
+
+    if (response.status === 401) {
+      handleLogout()
+      throw new Error('Session expired. Please login again.')
+    }
 
     if (!response.ok) {
       const result = await response.json()
@@ -277,7 +381,7 @@ export default function AdminDashboard() {
 
   const handleUpload = async () => {
     if (!adminToken) {
-      setMessage({ type: 'error', text: 'Please provide admin token' })
+      setMessage({ type: 'error', text: 'Not authenticated. Please login.' })
       return
     }
 
@@ -355,8 +459,128 @@ export default function AdminDashboard() {
     }
   }
 
+  // Login Screen
+  if (!isAuthenticated) {
+    return (
+      <Box
+        bg="gray.900"
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Box
+          bg="white"
+          p={8}
+          borderRadius="12px"
+          boxShadow="xl"
+          w="400px"
+          maxW="90%"
+        >
+          <VStack gap={6} align="stretch">
+            <HStack justify="center" gap={3}>
+              <FiLock size={32} color="#1DB954" />
+              <Text fontSize="24px" fontWeight="700" color="black">
+                Admin Access
+              </Text>
+            </HStack>
+
+            <Text color="gray.600" textAlign="center" fontSize="sm">
+              Enter the SHA-256 admin key from the backend console to access the
+              admin dashboard.
+            </Text>
+
+            {loginError && (
+              <Box
+                p={3}
+                borderRadius="4px"
+                bg="red.50"
+                border="1px solid"
+                borderColor="red.200"
+              >
+                <Text color="red.600" fontSize="sm">
+                  {loginError}
+                </Text>
+              </Box>
+            )}
+
+            <Box>
+              <Text fontWeight="500" mb={2} color="black" fontSize="sm">
+                Admin Key
+              </Text>
+              <Input
+                type="password"
+                placeholder="Enter 64-character SHA-256 key"
+                value={loginKey}
+                onChange={(e) => setLoginKey(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                border="1px solid #ccc"
+                color="black"
+                _placeholder={{ color: '#999' }}
+                _focus={{ borderColor: '#1DB954', boxShadow: '0 0 0 1px #1DB954' }}
+                fontFamily="monospace"
+                fontSize="sm"
+              />
+            </Box>
+
+            <Button
+              onClick={handleLogin}
+              disabled={loginLoading || !loginKey.trim()}
+              bg="#1DB954"
+              color="white"
+              size="lg"
+              _hover={{ bg: '#1ed760' }}
+              _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
+            >
+              {loginLoading ? 'Authenticating...' : 'Login to Admin'}
+            </Button>
+
+            <Text color="gray.500" fontSize="xs" textAlign="center">
+              The admin key is displayed in the backend terminal when the server
+              starts. Look for &quot;🔐 ADMIN KEY ROTATED&quot;
+            </Text>
+          </VStack>
+        </Box>
+      </Box>
+    )
+  }
+
+  // Authenticated Admin Dashboard
   return (
     <Box bg="white" minH="100vh" p={8}>
+      {/* Header with logout */}
+      <HStack justify="space-between" maxW="1400px" mx="auto" mb={6}>
+        <HStack gap={3}>
+          <FiLock color="#1DB954" />
+          <Text fontWeight="600" color="black">
+            Admin Dashboard
+          </Text>
+          {keyExpiry && !keyExpiry.expired && (
+            <Text fontSize="xs" color="gray.500">
+              Key expires in {Math.floor(keyExpiry.seconds_remaining / 60)} min
+            </Text>
+          )}
+        </HStack>
+        <HStack gap={3}>
+          <Button
+            size="sm"
+            variant="outline"
+            colorScheme="gray"
+            onClick={() => validateToken(adminToken)}
+          >
+            <FiRefreshCw />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            colorScheme="red"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </HStack>
+      </HStack>
+
       <HStack maxW="1400px" mx="auto" gap={6} align="start">
         {/* Left Sidebar - Global Settings */}
         <Box w="250px" border="1px solid #ddd" p={4} borderRadius="4px">
@@ -403,10 +627,6 @@ export default function AdminDashboard() {
 
         {/* Main Content */}
         <VStack flex={1} gap={4} align="stretch">
-          <Text fontSize="24px" fontWeight="600" color="black" mb={4}>
-            Admin Dashboard
-          </Text>
-
           {/* Message */}
           {message.text && (
             <Box
