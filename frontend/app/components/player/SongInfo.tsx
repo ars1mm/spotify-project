@@ -110,13 +110,13 @@ export function SongInfo() {
         </Text>
       </Box>
       <Button 
-        display={{ base: "none", md: "flex" }} 
         variant="ghost" 
         color={isLiked ? '#1DB954' : '#B3B3B3'} 
         _hover={{ color: isLiked ? '#1ed760' : 'white' }} 
         flexShrink={0}
         onClick={toggleLike}
         disabled={loading}
+        size={{ base: "sm", md: "md" }}
       >
         <FiHeart fill={isLiked ? 'currentColor' : 'none'} />
       </Button>

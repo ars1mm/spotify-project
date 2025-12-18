@@ -1,9 +1,11 @@
 'use client'
 
-import { Box, Text, SimpleGrid, VStack, Input, Button } from '@chakra-ui/react'
-import { useState, useEffect, useMemo } from 'react'
+import { Box, Text, SimpleGrid, VStack, Input, Button, HStack } from '@chakra-ui/react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { FiSearch } from 'react-icons/fi'
+import { FiSearch, FiPlay } from 'react-icons/fi'
+import Marquee from 'react-fast-marquee'
+import { useDrag } from '@use-gesture/react'
 import { useSearch } from '../../contexts/SearchContext'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { apiRequest } from '../../config/api'
@@ -45,6 +47,17 @@ export function MainContent() {
   const [mixSongs, setMixSongs] = useState<Song[]>([])
   const [likedSongs, setLikedSongs] = useState<Song[]>([])
   const [showLikedSongs, setShowLikedSongs] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const bind = useDrag(({ delta: [dx], buttons, down }) => {
+    if (buttons !== 1 || !down) return
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft -= dx
+    }
+  }, {
+    filterTaps: true,
+    pointer: { buttons: [1] }
+  })
 
   const dailyMixCovers = useMemo(() => {
     if (allSongs.length === 0) return { mix1: null, mix2: null }
@@ -145,9 +158,58 @@ export function MainContent() {
   return (
     <Box flex="1" bg="#121212" p={{ base: 4, md: 8 }} overflowY="auto">
       <VStack align="start" gap={8}>
-        <Text fontSize="3xl" fontWeight="bold" color="white">
-          Good evening{userName ? `, ${userName}` : ''}
-        </Text>
+        <Box w="full">
+          <Text fontSize="3xl" fontWeight="bold" color="white" mb={2}>
+            Good evening{userName ? `, ${userName}` : ''}
+          </Text>
+          {allSongs.length > 0 && (
+            <Box bg="#1a1a1a" borderRadius="8px" p={4} mb={6}>
+              <Text fontSize="sm" color="#a7a7a7" mb={2}>
+                Now trending
+              </Text>
+              <Marquee speed={30} gradient={false}>
+                {allSongs.slice(0, 10).map((song, index) => (
+                  <HStack
+                    key={song.id}
+                    mr={8}
+                    cursor="pointer"
+                    onClick={() => handleSongClick(song)}
+                    _hover={{ opacity: 0.8 }}
+                  >
+                    <Box
+                      w="32px"
+                      h="32px"
+                      bg="#282828"
+                      borderRadius="4px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      overflow="hidden"
+                    >
+                      {song.cover_image_url ? (
+                        <img
+                          src={song.cover_image_url}
+                          alt={song.title}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '4px',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <FiPlay color="#a7a7a7" size={12} />
+                      )}
+                    </Box>
+                    <Text color="white" fontSize="sm" whiteSpace="nowrap">
+                      {song.title} • {song.artist}
+                    </Text>
+                  </HStack>
+                ))}
+              </Marquee>
+            </Box>
+          )}
+        </Box>
 
         {showSearch && (
           <VStack align="start" gap={4} w="full">
@@ -360,9 +422,14 @@ export function MainContent() {
         )}
 
         <VStack align="start" gap={4} w="full">
-          <Text fontSize="2xl" fontWeight="bold" color="white">
-            Made For You
-          </Text>
+          <HStack justify="space-between" w="full">
+            <Text fontSize="2xl" fontWeight="bold" color="white">
+              Made For You
+            </Text>
+            <Text fontSize="sm" color="#a7a7a7" cursor="pointer" _hover={{ color: 'white' }}>
+              Show all
+            </Text>
+          </HStack>
           {songsLoading ? (
             <Text color="#a7a7a7">Loading...</Text>
           ) : allSongs.length > 0 ? (
@@ -467,123 +534,154 @@ export function MainContent() {
                   </VStack>
                 </VStack>
             ) : (
-              <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4} w="full">
-                {/* Liked Songs */}
-                {isAuthenticated && likedSongs.length > 0 && (
-                  <Box
-                    bg="linear-gradient(135deg, #450af5, #c4efd9)"
-                    p={4}
-                    borderRadius="8px"
-                    cursor="pointer"
-                    transition="all 0.2s"
-                    _hover={{ transform: 'scale(1.02)' }}
-                    onClick={() => setShowLikedSongs(true)}
-                  >
-                    <Box w="full" h="150px" display="flex" alignItems="center" justifyContent="center" mb={3}>
-                      <Text fontSize="64px">💜</Text>
-                    </Box>
-                    <Text color="white" fontWeight="bold" fontSize="16px">
-                      Liked Songs
-                    </Text>
-                    <Text color="white" fontSize="14px" mt={1}>
-                      {likedSongs.length} songs
-                    </Text>
-                  </Box>
-                )}
-                {/* Daily Mix 1 */}
-                <Box
-                  bg="#181818"
-                  p={4}
-                  borderRadius="8px"
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  _hover={{ bg: '#282828' }}
-                  onClick={() => {
-                    const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
-                    setMixSongs(shuffled)
-                    setSelectedMix('mix1')
-                  }}
-                >
-                  <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
-                    {dailyMixCovers.mix1 ? (
-                      <img src={dailyMixCovers.mix1} alt="Daily Mix 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <Box display="flex" alignItems="center" justifyContent="center" h="full">
-                        <Text color="#a7a7a7" fontSize="48px">♪</Text>
-                      </Box>
-                    )}
-                  </Box>
-                  <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                    Daily Mix 1
-                  </Text>
-                  <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                    Random songs for you
-                  </Text>
-                </Box>
-                {/* Daily Mix 2 */}
-                <Box
-                  bg="#181818"
-                  p={4}
-                  borderRadius="8px"
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  _hover={{ bg: '#282828' }}
-                  onClick={() => {
-                    const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
-                    setMixSongs(shuffled)
-                    setSelectedMix('mix2')
-                  }}
-                >
-                  <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
-                    {dailyMixCovers.mix2 ? (
-                      <img src={dailyMixCovers.mix2} alt="Daily Mix 2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <Box display="flex" alignItems="center" justifyContent="center" h="full">
-                        <Text color="#a7a7a7" fontSize="48px">♪</Text>
-                      </Box>
-                    )}
-                  </Box>
-                  <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                    Daily Mix 2
-                  </Text>
-                  <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                    Random songs for you
-                  </Text>
-                </Box>
-                {/* Artist playlists */}
-                {uniqueArtists.map((artist) => {
-                  const artistSongs = allSongs.filter(s => s.artist.toLowerCase().includes(artist.toLowerCase()))
-                  const coverImage = artistSongs[0]?.cover_image_url
-                  return (
+              <Box 
+                ref={scrollRef}
+                w="full" 
+                overflowX="auto" 
+                overflowY="hidden"
+                css={{
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  scrollbarWidth: 'none',
+                  cursor: 'grab',
+                  '&:active': { cursor: 'grabbing' }
+                }}
+                {...bind()}
+              >
+                <Box display="flex" gap={6} pb={2}>
+                  {/* Liked Songs */}
+                  {isAuthenticated && likedSongs.length > 0 && (
                     <Box
-                      key={artist}
-                      bg="#181818"
+                      bg="linear-gradient(135deg, #450af5, #c4efd9)"
                       p={4}
                       borderRadius="8px"
                       cursor="pointer"
                       transition="all 0.2s"
-                      _hover={{ bg: '#282828' }}
-                      onClick={() => setSelectedArtist(artist)}
+                      _hover={{ transform: 'scale(1.02)' }}
+                      onClick={() => setShowLikedSongs(true)}
+                      w="280px"
+                      h="320px"
+                      mr={6}
+                      flexShrink={0}
                     >
-                      <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
-                        {coverImage ? (
-                          <img src={coverImage} alt={artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <Box display="flex" alignItems="center" justifyContent="center" h="full">
-                            <Text color="#a7a7a7" fontSize="48px">♪</Text>
-                          </Box>
-                        )}
+                      <Box w="full" h="180px" display="flex" alignItems="center" justifyContent="center" mb={4}>
+                        <Text fontSize="80px">💜</Text>
                       </Box>
-                      <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                        This is {artist}
+                      <Text color="white" fontWeight="bold" fontSize="18px">
+                        Liked Songs
                       </Text>
-                      <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                        {artist} and more
+                      <Text color="white" fontSize="16px" mt={2}>
+                        {likedSongs.length} songs
                       </Text>
                     </Box>
-                  )
-                })}
-              </SimpleGrid>
+                  )}
+                  {/* Daily Mix 1 */}
+                  <Box
+                    bg="#181818"
+                    p={4}
+                    borderRadius="8px"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{ bg: '#282828' }}
+                    onClick={() => {
+                      const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
+                      localStorage.setItem('currentPlaylist', JSON.stringify(shuffled))
+                      handleSongClick(shuffled[0])
+                    }}
+                    w="280px"
+                    h="320px"
+                    mr={6}
+                    flexShrink={0}
+                  >
+                    <Box w="full" h="180px" bg="#282828" borderRadius="8px" mb={4} overflow="hidden">
+                      {dailyMixCovers.mix1 ? (
+                        <img src={dailyMixCovers.mix1} alt="Daily Mix 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                          <Text color="#a7a7a7" fontSize="60px">♪</Text>
+                        </Box>
+                      )}
+                    </Box>
+                    <Text color="white" fontWeight="bold" fontSize="18px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                      Daily Mix 1
+                    </Text>
+                    <Text color="#a7a7a7" fontSize="16px" mt={2} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                      Random songs for you
+                    </Text>
+                  </Box>
+                  {/* Daily Mix 2 */}
+                  <Box
+                    bg="#181818"
+                    p={4}
+                    borderRadius="8px"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{ bg: '#282828' }}
+                    onClick={() => {
+                      const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
+                      localStorage.setItem('currentPlaylist', JSON.stringify(shuffled))
+                      handleSongClick(shuffled[0])
+                    }}
+                    w="280px"
+                    h="320px"
+                    mr={6}
+                    flexShrink={0}
+                  >
+                    <Box w="full" h="180px" bg="#282828" borderRadius="8px" mb={4} overflow="hidden">
+                      {dailyMixCovers.mix2 ? (
+                        <img src={dailyMixCovers.mix2} alt="Daily Mix 2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                          <Text color="#a7a7a7" fontSize="60px">♪</Text>
+                        </Box>
+                      )}
+                    </Box>
+                    <Text color="white" fontWeight="bold" fontSize="18px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                      Daily Mix 2
+                    </Text>
+                    <Text color="#a7a7a7" fontSize="16px" mt={2} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                      Random songs for you
+                    </Text>
+                  </Box>
+                  {/* Artist Playlists */}
+                  {uniqueArtists.slice(0, 6).map((artist) => {
+                    const artistSongs = allSongs.filter(s => s.artist.toLowerCase().includes(artist.toLowerCase()))
+                    const artistCover = artistSongs[0]?.cover_image_url
+                    return (
+                      <Box
+                        key={artist}
+                        bg="#181818"
+                        p={4}
+                        borderRadius="8px"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{ bg: '#282828' }}
+                        onClick={() => setSelectedArtist(artist)}
+                        w="280px"
+                        h="320px"
+                        mr={6}
+                        flexShrink={0}
+                      >
+                        <Box w="full" h="180px" bg="#282828" borderRadius="8px" mb={4} overflow="hidden">
+                          {artistCover ? (
+                            <img src={artistCover} alt={`This is ${artist}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                              <Text color="#a7a7a7" fontSize="60px">♪</Text>
+                            </Box>
+                          )}
+                        </Box>
+                        <Text color="white" fontWeight="bold" fontSize="18px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                          This is {artist}
+                        </Text>
+                        <Text color="#a7a7a7" fontSize="16px" mt={2} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                          {artistSongs.length} songs
+                        </Text>
+                      </Box>
+                    )
+                  })}
+                </Box>
+              </Box>
+
             )
           ) : (
             <Text color="#a7a7a7">

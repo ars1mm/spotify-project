@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react'
 import toast from 'react-hot-toast'
 
 interface Song {
@@ -88,12 +88,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current
     if (!audio) return
 
+    audio.volume = volume
+    
     if (isPlaying) {
       audio.play()
     } else {
       audio.pause()
     }
-  }, [isPlaying, currentSong])
+  }, [isPlaying, currentSong, volume])
+
+
 
   const playSong = (song: Song) => {
     console.log('Playing song:', song)
@@ -136,9 +140,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }
 
   const setVolume = (vol: number) => {
-    setVolumeState(vol)
+    const clampedVol = Math.max(0, Math.min(1, vol))
+    setVolumeState(clampedVol)
     if (audioRef.current) {
-      audioRef.current.volume = vol
+      audioRef.current.volume = clampedVol
     }
   }
 
@@ -148,7 +153,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const playNext = () => {
+  const playNext = useCallback(() => {
     try {
       const playlist = localStorage.getItem('currentPlaylist')
       if (playlist) {
@@ -168,9 +173,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setCurrentSong(nextSong)
       setIsPlaying(true)
     }
-  }
+  }, [currentSong, currentIndex, songHistory, playSong, setCurrentSong, setIsPlaying, setCurrentIndex])
 
-  const playPrevious = () => {
+  const playPrevious = useCallback(() => {
     try {
       const playlist = localStorage.getItem('currentPlaylist')
       if (playlist) {
@@ -190,7 +195,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setCurrentSong(prevSong)
       setIsPlaying(true)
     }
-  }
+  }, [currentSong, currentIndex, songHistory, playSong, setCurrentSong, setIsPlaying, setCurrentIndex])
 
   const hasNext = (() => {
     try {
@@ -213,6 +218,24 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     } catch {}
     return currentIndex > 0
   })()
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && currentSong) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: currentSong.album || 'Unknown Album',
+        artwork: currentSong.cover_image_url ? [
+          { src: currentSong.cover_image_url, sizes: '512x512', type: 'image/jpeg' }
+        ] : []
+      })
+      
+      navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true))
+      navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false))
+      navigator.mediaSession.setActionHandler('nexttrack', playNext)
+      navigator.mediaSession.setActionHandler('previoustrack', playPrevious)
+    }
+  }, [currentSong, isPlaying, playNext, playPrevious])
 
   return (
     <PlayerContext.Provider value={{
