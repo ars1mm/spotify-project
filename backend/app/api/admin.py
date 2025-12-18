@@ -16,19 +16,32 @@ async def admin_login(key: str = Query(..., description="The SHA-256 admin key")
     Admin login endpoint - validates the provided SHA-256 key
     Usage: /api/v1/admin/login?key={your_sha256_key}
     """
-    if verify_admin_key(key):
-        expiry_info = get_key_expiry_info()
-        return {
-            "success": True,
-            "message": "Admin authentication successful",
-            "token": key,  # Return the key as the bearer token to use
-            "key_expiry": expiry_info
-        }
-    
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid admin key"
-    )
+    try:
+        print(f"Login attempt with key: {key[:8]}...")
+        is_valid = verify_admin_key(key)
+        print(f"Key valid: {is_valid}")
+        
+        if is_valid:
+            expiry_info = get_key_expiry_info()
+            return {
+                "success": True,
+                "message": "Admin authentication successful",
+                "token": key,  # Return the key as the bearer token to use
+                "key_expiry": expiry_info
+            }
+        
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin key"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Login error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
+        )
 
 @public_router.get("/key-hint")
 async def get_key_hint():

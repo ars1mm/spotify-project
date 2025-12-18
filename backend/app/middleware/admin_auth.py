@@ -2,6 +2,7 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 import hashlib
+import hmac
 import secrets
 import time
 from datetime import datetime
@@ -71,7 +72,7 @@ def verify_admin_key(provided_key: str) -> bool:
     """Verify if the provided key matches the admin key"""
     admin_key = get_admin_key()
     # Use constant-time comparison to prevent timing attacks
-    return hashlib.compare_digest(provided_key, admin_key)
+    return hmac.compare_digest(provided_key, admin_key)
 
 def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Verify admin access token using SHA-256 hash comparison"""
