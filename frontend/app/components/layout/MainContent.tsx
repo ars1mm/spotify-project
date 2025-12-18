@@ -52,6 +52,15 @@ export function MainContent() {
     }
   }, [allSongs])
 
+  const uniqueArtists = useMemo(() => {
+    const artistSet = new Set<string>()
+    allSongs.forEach(song => {
+      const primaryArtist = song.artist.split(/feat\.|ft\.|,|&/i)[0].trim()
+      artistSet.add(primaryArtist)
+    })
+    return Array.from(artistSet)
+  }, [allSongs])
+
   useEffect(() => {
     const session = authStorage.getSession()
     setIsAuthenticated(authStorage.isAuthenticated())
@@ -451,8 +460,8 @@ export function MainContent() {
                   </Text>
                 </Box>
                 {/* Artist playlists */}
-                {Array.from(new Set(allSongs.map(s => s.artist))).slice(0, 2).map((artist) => {
-                  const artistSongs = allSongs.filter(s => s.artist === artist)
+                {uniqueArtists.map((artist) => {
+                  const artistSongs = allSongs.filter(s => s.artist.toLowerCase().includes(artist.toLowerCase()))
                   const coverImage = artistSongs[0]?.cover_image_url
                   return (
                     <Box
