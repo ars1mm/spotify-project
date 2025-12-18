@@ -67,7 +67,8 @@ const GENRES = [
 ]
 
 // Use the same API URL logic as the rest of the app
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
   (typeof window !== 'undefined' && process.env.NODE_ENV === 'production'
     ? 'https://spotify-project-achx.onrender.com'
     : 'http://127.0.0.1:8000')
@@ -160,7 +161,7 @@ export default function AdminDashboard() {
         {
           method: 'GET',
           headers: {
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
         }
       )
@@ -178,7 +179,9 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Login error:', err)
-      setLoginError(`Failed to connect to server at ${API_URL}. Make sure the backend is running.`)
+      setLoginError(
+        `Failed to connect to server at ${API_URL}. Make sure the backend is running.`
+      )
     } finally {
       setLoginLoading(false)
     }
@@ -198,7 +201,7 @@ export default function AdminDashboard() {
 
   const fetchSongs = async () => {
     if (!adminToken) return
-    
+
     try {
       const response = await fetch(`${API_URL}/api/v1/admin/songs`, {
         headers: {
@@ -220,7 +223,7 @@ export default function AdminDashboard() {
 
   const deleteSong = async (songId: string) => {
     if (!adminToken) return
-    
+
     try {
       const response = await fetch(`${API_URL}/api/v1/admin/songs/${songId}`, {
         method: 'DELETE',
@@ -337,7 +340,9 @@ export default function AdminDashboard() {
   const uploadSong = async (song: Song) => {
     if (!song.title || !song.artist || !song.audioFile || !song.coverFile) {
       throw new Error(
-        `Song "${song.title || 'Untitled'}" is missing required fields (title, artist, audio, cover)`
+        `Song "${
+          song.title || 'Untitled'
+        }" is missing required fields (title, artist, audio, cover)`
       )
     }
 
@@ -517,7 +522,10 @@ export default function AdminDashboard() {
                 border="1px solid #ccc"
                 color="black"
                 _placeholder={{ color: '#999' }}
-                _focus={{ borderColor: '#1DB954', boxShadow: '0 0 0 1px #1DB954' }}
+                _focus={{
+                  borderColor: '#1DB954',
+                  boxShadow: '0 0 0 1px #1DB954',
+                }}
                 fontFamily="monospace"
                 fontSize="sm"
               />
@@ -783,7 +791,11 @@ export default function AdminDashboard() {
                             color={'black'}
                             onChange={(e) => {
                               if (e.target.files && e.target.files[0]) {
-                                updateSong(song.id, 'coverFile', e.target.files[0])
+                                updateSong(
+                                  song.id,
+                                  'coverFile',
+                                  e.target.files[0]
+                                )
                               }
                             }}
                             border="1px solid #ccc"
@@ -791,7 +803,8 @@ export default function AdminDashboard() {
                           />
                           {song.coverFile && (
                             <Text fontSize="sm" color="gray.600" mt={1}>
-                              {song.coverFile.name} ({(song.coverFile.size / 1024).toFixed(2)} KB)
+                              {song.coverFile.name} (
+                              {(song.coverFile.size / 1024).toFixed(2)} KB)
                             </Text>
                           )}
                         </Box>
@@ -845,8 +858,9 @@ export default function AdminDashboard() {
                 Upload{' '}
                 {uploadMode === 'bulk'
                   ? `${
-                      songs.filter((s) => s.title && s.artist && s.audioFile && s.coverFile)
-                        .length
+                      songs.filter(
+                        (s) => s.title && s.artist && s.audioFile && s.coverFile
+                      ).length
                     } Song(s)`
                   : 'Song'}
               </Button>
@@ -954,7 +968,9 @@ export default function AdminDashboard() {
         {/* Right Sidebar - Server Logs */}
         <Box w="300px" border="1px solid #ddd" p={4} borderRadius="4px">
           <HStack justify="space-between" mb={3}>
-            <Text fontWeight="600" color={'black'}>Server Logs</Text>
+            <Text fontWeight="600" color={'black'}>
+              Server Logs
+            </Text>
             <Button size="xs" variant="outline" onClick={() => setLogs([])}>
               Clear
             </Button>
