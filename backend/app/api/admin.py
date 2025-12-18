@@ -179,6 +179,17 @@ async def list_all_songs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/artists")
+async def get_artists(
+    supabase_service: SupabaseService = Depends(get_supabase_service)
+):
+    """Get list of unique artist names"""
+    try:
+        artists = supabase_service.get_unique_artists()
+        return {"artists": artists}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/songs/upload")
 async def upload_song(
     request: SongUploadRequest,

@@ -108,6 +108,11 @@ export default function AdminDashboard() {
   const [globalAlbum, setGlobalAlbum] = useState('')
   const [loading, setLoading] = useState(false)
   const [logs, setLogs] = useState<string[]>([])
+  const [artists, setArtists] = useState<string[]>([])
+  const [artistInput, setArtistInput] = useState<{ [key: string]: string }>({})
+  const [showArtistDropdown, setShowArtistDropdown] = useState<{
+    [key: string]: boolean
+  }>({})
 
   // Check for saved token on mount
   useEffect(() => {
@@ -116,6 +121,28 @@ export default function AdminDashboard() {
       validateToken(savedToken)
     }
   }, [])
+
+  // Fetch artists when authenticated
+  useEffect(() => {
+    if (isAuthenticated && adminToken) {
+      fetchArtists()
+    }
+  }, [isAuthenticated, adminToken])
+
+  const fetchArtists = async () => {
+    if (!adminToken) return
+    try {
+      const response = await fetch(`${API_URL}/api/v1/admin/artists`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setArtists(data.artists || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch artists:', error)
+    }
+  }
 
   const validateToken = async (token: string) => {
     try {
@@ -297,6 +324,24 @@ export default function AdminDashboard() {
     setSongs(
       songs.map((song) => (song.id === id ? { ...song, [field]: value } : song))
     )
+  }
+
+  const handleArtistInputChange = (songId: string, value: string) => {
+    setArtistInput({ ...artistInput, [songId]: value })
+    updateSong(songId, 'artist', value)
+    setShowArtistDropdown({ ...showArtistDropdown, [songId]: value.length > 0 })
+  }
+
+  const selectArtist = (songId: string, artist: string) => {
+    setArtistInput({ ...artistInput, [songId]: artist })
+    updateSong(songId, 'artist', artist)
+    setShowArtistDropdown({ ...showArtistDropdown, [songId]: false })
+  }
+
+  const getFilteredArtists = (songId: string) => {
+    const input = artistInput[songId] || ''
+    if (!input) return []
+    return artists.filter((a) => a.toLowerCase().includes(input.toLowerCase()))
   }
 
   const toggleGlobalGenre = (genre: string) => {
@@ -760,15 +805,21 @@ export default function AdminDashboard() {
                         </Box>
 
                         {/* Artist */}
-                        <Box>
+                        <Box position="relative">
                           <Text fontWeight="500" mb={1} color={'black'}>
                             Artist *
                           </Text>
                           <Input
-                            placeholder="Enter artist name"
-                            value={song.artist}
+                            placeholder="Enter or select artist name"
+                            value={artistInput[song.id] || song.artist}
                             onChange={(e) =>
-                              updateSong(song.id, 'artist', e.target.value)
+                              handleArtistInputChange(song.id, e.target.value)
+                            }
+                            onFocus={() =>
+                              setShowArtistDropdown({
+                                ...showArtistDropdown,
+                                [song.id]: true,
+                              })
                             }
                             border="1px solid #ccc"
                             color="black"
@@ -778,6 +829,35 @@ export default function AdminDashboard() {
                               boxShadow: 'none',
                             }}
                           />
+                          {showArtistDropdown[song.id] &&
+                            getFilteredArtists(song.id).length > 0 && (
+                              <Box
+                                position="absolute"
+                                top="100%"
+                                left={0}
+                                right={0}
+                                bg="white"
+                                border="1px solid #ccc"
+                                borderTop="none"
+                                maxH="200px"
+                                overflowY="auto"
+                                zIndex={10}
+                                boxShadow="md"
+                              >
+                                {getFilteredArtists(song.id).map((artist) => (
+                                  <Box
+                                    key={artist}
+                                    p={2}
+                                    cursor="pointer"
+                                    _hover={{ bg: 'gray.100' }}
+                                    onClick={() => selectArtist(song.id, artist)}
+                                    color="black"
+                                  >
+                                    {artist}
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
                         </Box>
 
                         {/* Cover Image */}

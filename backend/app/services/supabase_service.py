@@ -58,3 +58,6 @@ class SupabaseService:
     
     def add_song_to_playlist(self, playlist_id: str, song_id: str):
         return self.client.add_song_to_playlist(playlist_id, song_id)
+    
+    def get_unique_artists(self):
+        return self.client.get_unique_artists()
