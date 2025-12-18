@@ -1,7 +1,7 @@
 'use client'
 
-import { Box, Text, SimpleGrid, VStack, Input } from '@chakra-ui/react'
-import { useState, useEffect } from 'react'
+import { Box, Text, SimpleGrid, VStack, Input, Button } from '@chakra-ui/react'
+import { useState, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { FiSearch } from 'react-icons/fi'
 import { useSearch } from '../../contexts/SearchContext'
@@ -29,15 +29,6 @@ interface Playlist {
   created_at: string
 }
 
-const playlists = [
-  { id: 1, name: "Today's Top Hits", image: '/placeholder.jpg' },
-  { id: 2, name: 'RapCaviar', image: '/placeholder.jpg' },
-  { id: 3, name: 'All Out 2010s', image: '/placeholder.jpg' },
-  { id: 4, name: 'Rock Classics', image: '/placeholder.jpg' },
-  { id: 5, name: 'Chill Hits', image: '/placeholder.jpg' },
-  { id: 6, name: 'Pop Rising', image: '/placeholder.jpg' },
-]
-
 export function MainContent() {
   const { showSearch } = useSearch()
   const { playSong } = usePlayer()
@@ -49,6 +40,17 @@ export function MainContent() {
   const [searchLoading, setSearchLoading] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [songsLoading, setSongsLoading] = useState(false)
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(null)
+  const [selectedMix, setSelectedMix] = useState<string | null>(null)
+  const [mixSongs, setMixSongs] = useState<Song[]>([])
+
+  const dailyMixCovers = useMemo(() => {
+    if (allSongs.length === 0) return { mix1: null, mix2: null }
+    return {
+      mix1: allSongs[Math.floor(Math.random() * allSongs.length)]?.cover_image_url,
+      mix2: allSongs[Math.floor(Math.random() * allSongs.length)]?.cover_image_url
+    }
+  }, [allSongs])
 
   useEffect(() => {
     const session = authStorage.getSession()
@@ -333,158 +335,161 @@ export function MainContent() {
 
         <VStack align="start" gap={4} w="full">
           <Text fontSize="2xl" fontWeight="bold" color="white">
-            All Songs
+            Made For You
           </Text>
           {songsLoading ? (
-            <Text color="#a7a7a7">Loading songs...</Text>
+            <Text color="#a7a7a7">Loading...</Text>
           ) : allSongs.length > 0 ? (
-            <VStack align="start" gap={0} w="full">
-              {allSongs.map((song, index: number) => (
+            selectedArtist || selectedMix ? (
+                <VStack align="start" gap={4} w="full">
+                  <Button
+                    onClick={() => { setSelectedArtist(null); setSelectedMix(null); }}
+                    bg="transparent"
+                    color="#1db954"
+                    _hover={{ color: '#1ed760' }}
+                    p={0}
+                    fontSize="sm"
+                  >
+                    ← Back to playlists
+                  </Button>
+                  <VStack align="start" gap={0} w="full">
+                    {(selectedMix ? mixSongs : allSongs.filter(s => s.artist.toLowerCase().includes(selectedArtist?.toLowerCase() || ''))).map((song, index) => (
+                      <Box
+                        key={song.id}
+                        display="flex"
+                        alignItems="center"
+                        p={2}
+                        w="full"
+                        _hover={{ bg: '#1a1a1a' }}
+                        borderRadius="4px"
+                        cursor="pointer"
+                        transition="all 0.1s ease"
+                        onClick={() => handleSongClick(song)}
+                      >
+                        <Text color="#a7a7a7" fontSize="16px" w="40px" textAlign="center">{index + 1}</Text>
+                        <Box w="40px" h="40px" bg="#282828" borderRadius="4px" mr={3} display="flex" alignItems="center" justifyContent="center">
+                          {song.cover_image_url ? (
+                            <img src={song.cover_image_url} alt={song.title} style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                          ) : (
+                            <Text color="#a7a7a7" fontSize="12px">♪</Text>
+                          )}
+                        </Box>
+                        <Box flex="1">
+                          <Text color="white" fontWeight="400" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{song.title}</Text>
+                          <Text color="#a7a7a7" fontSize="14px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{song.artist}</Text>
+                        </Box>
+                        <Text color="#a7a7a7" fontSize="14px" mr={4} minW="120px" display={{ base: "none", md: "block" }} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                          {song.album && song.album !== 'Unknown' ? song.album : song.artist}
+                        </Text>
+                        <Text color="#a7a7a7" fontSize="14px" minW="50px" textAlign="right" display={{ base: "none", md: "block" }}>
+                          {song.duration_seconds ? `${Math.floor(song.duration_seconds / 60)}:${(song.duration_seconds % 60).toString().padStart(2, '0')}` : '--:--'}
+                        </Text>
+                      </Box>
+                    ))}
+                  </VStack>
+                </VStack>
+            ) : (
+              <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4} w="full">
+                {/* Daily Mix 1 */}
                 <Box
-                  key={song.id}
-                  display="flex"
-                  alignItems="center"
-                  p={2}
-                  w="full"
-                  _hover={{ bg: '#1a1a1a' }}
-                  borderRadius="4px"
+                  bg="#181818"
+                  p={4}
+                  borderRadius="8px"
                   cursor="pointer"
-                  transition="all 0.1s ease"
-                  onClick={() => handleSongClick(song)}
+                  transition="all 0.2s"
+                  _hover={{ bg: '#282828' }}
+                  onClick={() => {
+                    const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
+                    setMixSongs(shuffled)
+                    setSelectedMix('mix1')
+                  }}
                 >
-                  <Text
-                    color="#a7a7a7"
-                    fontSize="16px"
-                    w="40px"
-                    textAlign="center"
-                  >
-                    {index + 1}
-                  </Text>
-                  <Box
-                    w="40px"
-                    h="40px"
-                    bg="#282828"
-                    borderRadius="4px"
-                    mr={3}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    {song.cover_image_url ? (
-                      <img
-                        src={song.cover_image_url}
-                        alt={song.title}
-                        onError={(e) => {
-                          console.error('Failed to load cover:', song.cover_image_url)
-                          e.currentTarget.style.display = 'none'
-                        }}
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '4px',
-                          objectFit: 'cover',
-                        }}
-                      />
+                  <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
+                    {dailyMixCovers.mix1 ? (
+                      <img src={dailyMixCovers.mix1} alt="Daily Mix 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <Text color="#a7a7a7" fontSize="12px">
-                        ♪
-                      </Text>
+                      <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                        <Text color="#a7a7a7" fontSize="48px">♪</Text>
+                      </Box>
                     )}
                   </Box>
-                  <Box flex="1">
-                    <Text
-                      color="white"
-                      fontWeight="400"
-                      fontSize="16px"
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      whiteSpace="nowrap"
-                    >
-                      {song.title}
-                    </Text>
-                    <Text
-                      color="#a7a7a7"
-                      fontSize="14px"
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      whiteSpace="nowrap"
-                    >
-                      {song.artist}
-                    </Text>
-                  </Box>
-                  <Text
-                    color="#a7a7a7"
-                    fontSize="14px"
-                    mr={4}
-                    minW={{ base: "0", md: "120px" }}
-                    display={{ base: "none", md: "block" }}
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    whiteSpace="nowrap"
-                  >
-                    {song.album && song.album !== 'Unknown' ? song.album : song.artist}
+                  <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                    Daily Mix 1
                   </Text>
-                  <Text
-                    color="#a7a7a7"
-                    fontSize="14px"
-                    minW="50px"
-                    textAlign="right"
-                    display={{ base: "none", md: "block" }}
-                  >
-                    {song.duration_seconds
-                      ? `${Math.floor(song.duration_seconds / 60)}:${(
-                          song.duration_seconds % 60
-                        )
-                          .toString()
-                          .padStart(2, '0')}`
-                      : '--:--'}
+                  <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                    Random songs for you
                   </Text>
                 </Box>
-              ))}
-            </VStack>
+                {/* Daily Mix 2 */}
+                <Box
+                  bg="#181818"
+                  p={4}
+                  borderRadius="8px"
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  _hover={{ bg: '#282828' }}
+                  onClick={() => {
+                    const shuffled = [...allSongs].sort(() => 0.5 - Math.random()).slice(0, 20)
+                    setMixSongs(shuffled)
+                    setSelectedMix('mix2')
+                  }}
+                >
+                  <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
+                    {dailyMixCovers.mix2 ? (
+                      <img src={dailyMixCovers.mix2} alt="Daily Mix 2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                        <Text color="#a7a7a7" fontSize="48px">♪</Text>
+                      </Box>
+                    )}
+                  </Box>
+                  <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                    Daily Mix 2
+                  </Text>
+                  <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                    Random songs for you
+                  </Text>
+                </Box>
+                {/* Artist playlists */}
+                {Array.from(new Set(allSongs.map(s => s.artist))).slice(0, 2).map((artist) => {
+                  const artistSongs = allSongs.filter(s => s.artist === artist)
+                  const coverImage = artistSongs[0]?.cover_image_url
+                  return (
+                    <Box
+                      key={artist}
+                      bg="#181818"
+                      p={4}
+                      borderRadius="8px"
+                      cursor="pointer"
+                      transition="all 0.2s"
+                      _hover={{ bg: '#282828' }}
+                      onClick={() => setSelectedArtist(artist)}
+                    >
+                      <Box w="full" h="150px" bg="#282828" borderRadius="8px" mb={3} overflow="hidden">
+                        {coverImage ? (
+                          <img src={coverImage} alt={artist} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Box display="flex" alignItems="center" justifyContent="center" h="full">
+                            <Text color="#a7a7a7" fontSize="48px">♪</Text>
+                          </Box>
+                        )}
+                      </Box>
+                      <Text color="white" fontWeight="bold" fontSize="16px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                        This is {artist}
+                      </Text>
+                      <Text color="#a7a7a7" fontSize="14px" mt={1} overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                        {artist} and more
+                      </Text>
+                    </Box>
+                  )
+                })}
+              </SimpleGrid>
+            )
           ) : (
             <Text color="#a7a7a7">
-              No songs uploaded yet. Visit /admin to upload songs.
+              No songs available yet.
             </Text>
           )}
-        </VStack>
-
-        <VStack align="start" gap={4} w="full">
-          <Text fontSize="2xl" fontWeight="bold" color="white">
-            Made for you
-          </Text>
-          <SimpleGrid columns={{ base: 2, md: 3 }} gap={{ base: 4, md: 6 }} w="full">
-            {playlists.map((playlist) => (
-              <Box
-                key={playlist.id}
-                bg="#535353"
-                p={4}
-                borderRadius="md"
-                cursor="pointer"
-                _hover={{ bg: 'gray.600' }}
-                transition="all 0.2s"
-              >
-                <VStack gap={3}>
-                  <Box
-                    w={{ base: "100%", md: "150px" }}
-                    h={{ base: "120px", md: "150px" }}
-                    bg="gray.500"
-                    borderRadius="md"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Text color="white" fontSize="sm">
-                      {playlist.name}
-                    </Text>
-                  </Box>
-                  <Text color="white" fontWeight="medium" textAlign="center">
-                    {playlist.name}
-                  </Text>
-                </VStack>
-              </Box>
-            ))}
-          </SimpleGrid>
         </VStack>
       </VStack>
     </Box>
