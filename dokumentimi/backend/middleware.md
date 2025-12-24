@@ -2,7 +2,7 @@
 
 # Middleware: Admin Auth (Përshkrim)
 
-Ky modul ofron një mënyrë të thjeshtë dhe të lehtë për të mbrojtur endpoint-et administrative duke përdorur një *admin key* të gjeneruar automatikisht dhe një dependency FastAPI (HTTP Bearer).
+Ky modul ofron një mënyrë të thjeshtë dhe të lehtë për të mbrojtur endpoint-et administrative duke përdorur një _admin key_ të gjeneruar automatikisht dhe një dependency FastAPI (HTTP Bearer).
 
 Pikat kryesore:
 
@@ -73,4 +73,3 @@ curl -X DELETE -H "Authorization: Bearer $ADMIN_KEY" http://localhost:8000/admin
 ## Përmbledhje
 
 Ky middleware është një zgjidhje e thjeshtë për raste kur duhen endpoint-e administrative të aksesueshme shpejt pa ndërtuar sistem të plotë të rolave. Përdoreni me kujdes në production dhe konsideroni përmirësimet e sigurisë të përshkruara më sipër.
-
