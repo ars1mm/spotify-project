@@ -15,6 +15,8 @@ dokumentimi/
 ├── 06-menaxhimi-i-skedareve.md
 ├── 07-api-dokumentimi.md
 ├── 08-deployment.md
+├── docker/
+│   └── README.md
 ```
 
 ## Si të përdorni këtë dokumentim
@@ -27,6 +29,7 @@ dokumentimi/
 - `06-menaxhimi-i-skedareve.md` për upload dhe storage.
 - `07-api-dokumentimi.md` për referencë të endpoint-ëve.
 - `08-deployment.md` për udhëzime deploy.
+- `docker/README.md` për Docker dhe Kubernetes.
 
 ## Kontributi
 
