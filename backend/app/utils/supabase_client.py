@@ -398,7 +398,9 @@ class SupabaseStorageClient:
             # Format songs with audio URLs
             songs = []
             for item in songs_response.data:
-                song = item['songs']
+                song = item.get('songs')
+                if not song:
+                    continue
                 audio_url = None
                 if song.get('file_path'):
                     audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}"
@@ -475,6 +477,11 @@ class SupabaseStorageClient:
     def like_song(self, user_id: str, song_id: str) -> dict:
         """Like a song"""
         try:
+            # Check if already liked first
+            existing = self.supabase.table("liked_songs").select("id").eq("user_id", user_id).eq("song_id", song_id).execute()
+            if existing.data and len(existing.data) > 0:
+                return {"success": True, "message": "Song already liked"}
+            
             response = self.supabase.table("liked_songs").insert({
                 "user_id": user_id,
                 "song_id": song_id
@@ -497,7 +504,9 @@ class SupabaseStorageClient:
             response = self.supabase.table("liked_songs").select("*, songs(*)").eq("user_id", user_id).order("created_at", desc=True).execute()
             songs = []
             for item in response.data:
-                song = item['songs']
+                song = item.get('songs')
+                if not song:
+                    continue
                 audio_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{self.bucket_name}/{song['file_path']}" if song.get('file_path') else None
                 songs.append({
                     "id": song['id'],

@@ -9,6 +9,8 @@ import { AuthButtons } from '../components/auth/AuthButtons'
 import { UserProfile } from '../components/user/UserProfile'
 import { authStorage } from '../lib/auth'
 
+import { Suspense } from 'react'
+
 export default function LibraryPage() {
   const [isAuthenticated] = useState(() => authStorage.isAuthenticated())
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -21,7 +23,9 @@ export default function LibraryPage() {
 
       <Flex h="100vh" pt={{ base: "56px", md: 0 }} pb="90px">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        <LibraryContent />
+        <Suspense fallback={<Box flex="1" bg="#121212" />}>
+          <LibraryContent />
+        </Suspense>
       </Flex>
       <Player />
     </Box>

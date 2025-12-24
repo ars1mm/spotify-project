@@ -2,7 +2,7 @@
 
 import { Box, Text, VStack, HStack, Grid } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { authStorage } from '../../lib/auth'
@@ -29,13 +29,17 @@ interface Playlist {
 
 export function LibraryContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tab = searchParams.get('tab')
   const { playSong } = usePlayer()
   const [recentSongs, setRecentSongs] = useState<Song[]>([])
   const [likedSongs, setLikedSongs] = useState<Song[]>([])
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [activeTab, setActiveTab] = useState<'recent' | 'liked'>('recent')
+  const [activeTab, setActiveTab] = useState<'recent' | 'liked'>(
+    (tab as 'recent' | 'liked') || 'recent'
+  )
 
   useEffect(() => {
     setIsAuthenticated(authStorage.isAuthenticated())
@@ -43,6 +47,12 @@ export function LibraryContent() {
     loadLikedSongs()
     loadPlaylists()
   }, [])
+
+  useEffect(() => {
+    if (tab === 'liked' || tab === 'recent') {
+      setActiveTab(tab as 'recent' | 'liked')
+    }
+  }, [tab])
 
   const handleSongClick = (song: Song) => {
     if (!isAuthenticated) {

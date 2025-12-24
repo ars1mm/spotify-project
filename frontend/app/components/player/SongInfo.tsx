@@ -37,7 +37,7 @@ export function SongInfo() {
       toast.error('Please log in to like songs');
       return;
     }
-    if (!currentSong?.id) return;
+    if (!currentSong?.id || loading) return;
 
     setLoading(true);
     try {
@@ -55,6 +55,13 @@ export function SongInfo() {
         toast.success('Added to liked songs');
       }
     } catch (error) {
+      // Re-check actual state from server on error
+      try {
+        const response = await apiRequest(`/api/v1/songs/${currentSong.id}/liked?user_id=${session.user.id}`);
+        setIsLiked(response.is_liked);
+      } catch {
+        // Ignore re-check errors
+      }
       toast.error('Failed to update liked status');
     } finally {
       setLoading(false);

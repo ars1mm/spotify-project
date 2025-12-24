@@ -224,7 +224,8 @@ def add_song_to_playlist(playlist_id: str, song_id: str):
 @router.get("/songs/liked", tags=["songs"])
 def get_liked_songs(user_id: str):
     """Get user's liked songs"""
-    result = supabase_service.get_liked_songs(user_id)
+    admin_service = SupabaseService(use_service_role=True)
+    result = admin_service.get_liked_songs(user_id)
     if result.get("error"):
         raise HTTPException(status_code=500, detail=result["error"])
     return result
@@ -250,7 +251,8 @@ def unlike_song(song_id: str, user_id: str):
 @router.get("/songs/{song_id}/liked", tags=["songs"])
 def check_song_liked(song_id: str, user_id: str):
     """Check if song is liked"""
-    is_liked = supabase_service.is_song_liked(user_id, song_id)
+    admin_service = SupabaseService(use_service_role=True)
+    is_liked = admin_service.is_song_liked(user_id, song_id)
     return {"is_liked": is_liked}
 
 # Upload endpoint moved to admin routes (/api/v1/admin/songs/upload)

@@ -14,13 +14,30 @@ export const apiConfig = {
 export async function apiRequest(endpoint: string, options?: RequestInit) {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  // Get token from authStorage
+  let authHeader = {};
+  if (typeof window !== 'undefined') {
+    const sessionStr = localStorage.getItem('spotify_session');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        if (session?.access_token) {
+          authHeader = { 'Authorization': `Bearer ${session.access_token}` };
+        }
+      } catch (e) {
+        console.error('Failed to parse session for auth header');
+      }
+    }
+  }
+
   try {
     const response = await fetch(url, {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeader,
         ...options?.headers,
       },
-      ...options,
     });
 
     if (!response.ok) {

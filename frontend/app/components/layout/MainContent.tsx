@@ -78,14 +78,15 @@ export function MainContent() {
 
   useEffect(() => {
     const session = authStorage.getSession()
-    setIsAuthenticated(authStorage.isAuthenticated())
+    const isAuth = authStorage.isAuthenticated()
+    setIsAuthenticated(isAuth)
     if (session?.user?.name) {
       setUserName(session.user.name)
     }
-
+    
     // Load all songs on mount
     loadAllSongs()
-    if (isAuthenticated) {
+    if (isAuth) {
       loadLikedSongs()
     }
   }, [])
