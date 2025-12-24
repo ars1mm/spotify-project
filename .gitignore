@@ -5,3 +5,6 @@
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc
+
+# Source code
+project_source_code.txt
