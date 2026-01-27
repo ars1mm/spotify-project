@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import router
+from app.api.main_routes import router
 from app.api.admin import router as admin_router, public_router as admin_public_router
 from app.api.codebase import router as codebase_router
 from app.core.config import settings

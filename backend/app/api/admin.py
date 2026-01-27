@@ -12,11 +12,11 @@ from app.api.routes.admin import (
 )
 
 # Public admin routes (no authentication required)
-public_router = APIRouter()
+public_router = APIRouter(prefix="/admin")
 public_router.include_router(auth_routes.router)
 
 # Protected admin routes (authentication required)
-router = APIRouter()
+router = APIRouter(prefix="/admin")
 router.include_router(song_routes.router)
 router.include_router(analytics_routes.router)
 router.include_router(trending_routes.router)

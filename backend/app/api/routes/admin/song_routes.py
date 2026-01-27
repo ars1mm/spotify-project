@@ -11,7 +11,7 @@ from app.schemas.upload import SongUploadRequest
 import base64
 
 router = APIRouter(
-    prefix="/admin/songs", 
+    prefix="/songs", 
     tags=["admin-songs"], 
     dependencies=[Depends(verify_admin_token)]
 )

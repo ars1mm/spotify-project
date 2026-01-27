@@ -18,9 +18,9 @@ _generated_admin_key: str | None = None
 _key_created_at: float = 0
 
 def _create_new_key() -> str:
-    """Create a new SHA-256 admin key"""
-    random_bytes = secrets.token_bytes(32)
-    return hashlib.sha256(random_bytes).hexdigest()
+    """Create a new SHA-512 admin key"""
+    random_bytes = secrets.token_bytes(64)  # 64 bytes for SHA-512
+    return hashlib.sha512(random_bytes).hexdigest()
 
 def rotate_admin_key() -> str:
     """Force rotate the admin key and return the new key"""
@@ -75,7 +75,7 @@ def verify_admin_key(provided_key: str) -> bool:
     return hmac.compare_digest(provided_key, admin_key)
 
 def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify admin access token using SHA-256 hash comparison"""
+    """Verify admin access token using SHA-512 hash comparison"""
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

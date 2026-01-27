@@ -8,7 +8,7 @@ from app.services.admin.admin_service import AdminService
 from app.middleware.admin_auth import verify_admin_token
 
 router = APIRouter(
-    prefix="/admin/trending", 
+    prefix="/trending", 
     tags=["admin-trending"], 
     dependencies=[Depends(verify_admin_token)]
 )

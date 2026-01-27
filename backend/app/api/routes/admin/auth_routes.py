@@ -9,14 +9,14 @@ from app.middleware.admin_auth import (
     rotate_admin_key
 )
 
-router = APIRouter(prefix="/admin", tags=["admin-auth"])
+router = APIRouter(tags=["admin-auth"])
 
 
 @router.get("/login")
-async def admin_login(key: str = Query(..., description="The SHA-256 admin key")):
+async def admin_login(key: str = Query(..., description="The SHA-512 admin key")):
     """
-    Admin login endpoint - validates the provided SHA-256 key
-    Usage: /api/v1/admin/login?key={your_sha256_key}
+    Admin login endpoint - validates the provided SHA-512 key
+    Usage: /api/v1/admin/login?key={your_sha512_key}
     """
     try:
         print(f"Login attempt with key: {key[:8]}...")
@@ -57,6 +57,23 @@ async def get_key_hint():
         "message": "The admin key is printed in the backend console on startup. Look for '🔐 ADMIN KEY ROTATED:'",
         "hint": "Check the terminal where uvicorn is running",
         "key_expiry": expiry_info
+    }
+
+
+@router.get("/current-key")
+async def get_current_key():
+    """
+    Returns the current admin key for easy copying.
+    WARNING: This should be disabled in production!
+    """
+    from app.middleware.admin_auth import get_admin_key
+    current_key = get_admin_key()
+    expiry_info = get_key_expiry_info()
+    return {
+        "current_key": current_key,
+        "key_expiry": expiry_info,
+        "login_url": f"/api/v1/admin/login?key={current_key}",
+        "warning": "This endpoint should be disabled in production!"
     }
 
 

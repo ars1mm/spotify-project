@@ -8,7 +8,7 @@ from app.services.music.artist_service import ArtistService
 from app.middleware.admin_auth import verify_admin_token
 
 router = APIRouter(
-    prefix="/admin/maintenance", 
+    prefix="/maintenance", 
     tags=["admin-maintenance"], 
     dependencies=[Depends(verify_admin_token)]
 )
