@@ -39,23 +39,23 @@ async def codebase_explorer_gui():
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a25;
-            --bg-card: #16161f;
-            --accent-primary: #6366f1;
-            --accent-secondary: #8b5cf6;
-            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border-color: #2e2e3a;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --code-bg: #1e1e2e;
-            --match-highlight: rgba(99, 102, 241, 0.3);
-            --match-line: rgba(139, 92, 246, 0.15);
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e8e8e8;
+            --bg-card: #ffffff;
+            --accent-primary: #000000;
+            --accent-secondary: #333333;
+            --accent-gradient: #000000;
+            --text-primary: #000000;
+            --text-secondary: #333333;
+            --text-muted: #666666;
+            --border-color: #cccccc;
+            --success: #000000;
+            --warning: #000000;
+            --error: #000000;
+            --code-bg: #f9f9f9;
+            --match-highlight: rgba(0, 0, 0, 0.2);
+            --match-line: rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -79,10 +79,7 @@ async def codebase_explorer_gui():
             left: 0;
             right: 0;
             bottom: 0;
-            background: 
-                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+            background: transparent;
             pointer-events: none;
             z-index: 0;
         }
@@ -118,16 +115,13 @@ async def codebase_explorer_gui():
             align-items: center;
             justify-content: center;
             font-size: 28px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+            border: 2px solid var(--border-color);
         }
 
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
         }
 
         .subtitle {
@@ -173,7 +167,7 @@ async def codebase_explorer_gui():
         .tab.active {
             background: var(--accent-gradient);
             color: white;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+            border: 1px solid var(--border-color);
         }
 
         .tab-icon {
@@ -202,7 +196,6 @@ async def codebase_explorer_gui():
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
         }
 
         .search-header {
@@ -254,7 +247,7 @@ async def codebase_explorer_gui():
         .input-wrapper input:focus {
             outline: none;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
         }
 
         .input-wrapper input::placeholder {
@@ -313,12 +306,11 @@ async def codebase_explorer_gui():
         .btn-primary {
             background: var(--accent-gradient);
             color: white;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+            border: 1px solid var(--border-color);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
+            background: var(--text-secondary);
         }
 
         .btn-secondary {
@@ -374,13 +366,15 @@ async def codebase_explorer_gui():
         }
 
         .badge-success {
-            background: rgba(34, 197, 94, 0.15);
+            background: var(--bg-tertiary);
             color: var(--success);
+            border: 1px solid var(--border-color);
         }
 
         .badge-warning {
-            background: rgba(245, 158, 11, 0.15);
+            background: var(--bg-tertiary);
             color: var(--warning);
+            border: 1px solid var(--border-color);
         }
 
         /* File Results */
@@ -472,7 +466,7 @@ async def codebase_explorer_gui():
             text-align: right;
             user-select: none;
             border-right: 1px solid var(--border-color);
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--bg-secondary);
         }
 
         .line-content {
@@ -540,6 +534,7 @@ async def codebase_explorer_gui():
         .category-item.active {
             background: var(--accent-gradient);
             color: white;
+            border: 1px solid var(--border-color);
         }
 
         .category-icon {
@@ -573,7 +568,6 @@ async def codebase_explorer_gui():
 
         .qa-item:hover {
             border-color: var(--accent-primary);
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
         }
 
         .qa-question {
@@ -599,6 +593,7 @@ async def codebase_explorer_gui():
             justify-content: center;
             font-size: 0.9rem;
             flex-shrink: 0;
+            border: 1px solid var(--border-color);
         }
 
         .qa-answer {
@@ -630,11 +625,12 @@ async def codebase_explorer_gui():
 
         .service-tag {
             font-size: 0.75rem;
-            background: rgba(139, 92, 246, 0.15);
+            background: var(--bg-tertiary);
             color: var(--accent-secondary);
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             margin-left: 0.5rem;
+            border: 1px solid var(--border-color);
         }
 
         /* Overview Section */
@@ -654,8 +650,6 @@ async def codebase_explorer_gui():
 
         .overview-card:hover {
             border-color: var(--accent-primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
         }
 
         .overview-card h3 {
@@ -709,7 +703,7 @@ async def codebase_explorer_gui():
         .spinner {
             width: 24px;
             height: 24px;
-            border: 3px solid var(--border-color);
+            border: 3px solid var(--bg-tertiary);
             border-top-color: var(--accent-primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -785,12 +779,12 @@ async def codebase_explorer_gui():
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: var(--text-muted);
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
+            background: var(--text-secondary);
         }
     </style>
 </head>
@@ -877,6 +871,10 @@ async def codebase_explorer_gui():
                         <li class="category-item" data-category="backend">
                             <span class="category-icon">⚙️</span>
                             <span>Backend</span>
+                        </li>
+                        <li class="category-item" data-category="frontend">
+                            <span class="category-icon">🖥️</span>
+                            <span>Frontend</span>
                         </li>
                         <li class="category-item" data-category="api">
                             <span class="category-icon">🔌</span>

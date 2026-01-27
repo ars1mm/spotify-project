@@ -33,6 +33,7 @@ class CodebaseSearchService:
         
         Args:
             base_path: Root directory of the project. Defaults to project root.
+                      Searches include both backend and frontend directories.
         """
         if base_path is None:
             # Navigate up from current file to project root
@@ -83,6 +84,7 @@ class CodebaseSearchService:
     ) -> Dict:
         """
         Search the codebase using a regex pattern.
+        Searches both backend and frontend code directories.
         
         Args:
             pattern: Regex pattern to search for

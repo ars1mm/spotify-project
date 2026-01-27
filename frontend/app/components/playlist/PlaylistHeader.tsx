@@ -29,14 +29,8 @@ export function PlaylistHeader({ playlist, songs, currentUserId, onSettingsClick
           <Text fontSize="sm" fontWeight="bold" color={APP_CONSTANTS.COLORS.TEXT_PRIMARY} textTransform="uppercase">
             Playlist
           </Text>
-          {currentUserId === playlist.user_id && (
-            <PrimaryButton
-              onClick={onSettingsClick}
-              size="sm"
-            >
-              Settings
-            </PrimaryButton>
-          )}
+          {/* Current implementation checks for current user id and playlist user id if they are the same, then shows the settings button */}
+          {currentUserId === playlist.user_id && <PrimaryButton onClick={onSettingsClick} size="sm">Settings</PrimaryButton>}
         </Flex>
         
         <Text fontSize={{ base: "2xl", md: "5xl" }} fontWeight="bold" color={APP_CONSTANTS.COLORS.TEXT_PRIMARY}>
