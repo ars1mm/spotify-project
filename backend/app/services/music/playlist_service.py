@@ -444,6 +444,73 @@ class PlaylistService(BaseSupabaseClient):
             logger.error(f"Error adding song {song_id.strip()} to playlist {playlist_id.strip()}: {error_msg}")
             return {"error": error_msg}
 
+    def delete_playlist(self, playlist_id: str, user_id: str) -> Dict[str, any]:
+        """
+        Delete a playlist (only owner can delete).
+
+        DELETE /playlists/{playlist_id}
+
+        Args:
+            playlist_id (str): ID of the playlist to delete
+            user_id (str): ID of the user requesting deletion
+
+        Returns:
+            Dict containing:
+            - success (bool): True if deletion succeeded
+            - message (str): Success message
+            - error (str, optional): Error message if operation failed
+
+        Raises:
+            ValueError: If playlist_id or user_id are empty
+        """
+        # Input validation
+        if not playlist_id or not playlist_id.strip():
+            raise ValueError("Playlist ID cannot be empty")
+        if not user_id or not user_id.strip():
+            raise ValueError("User ID cannot be empty")
+
+        try:
+            logger.info(f"Deleting playlist {playlist_id.strip()} by user {user_id.strip()}")
+
+            # First check if playlist exists and user owns it
+            playlist_query = (
+                self.supabase.table("playlists")
+                .select("user_id")
+                .eq("id", playlist_id.strip())
+            )
+            playlist_response = playlist_query.execute()
+
+            if not playlist_response.data:
+                return {"error": "Playlist not found"}
+
+            if playlist_response.data[0]['user_id'] != user_id.strip():
+                return {"error": "You can only delete your own playlists"}
+
+            # Delete playlist songs first (foreign key constraint)
+            self.supabase.table("playlist_songs").delete().eq("playlist_id", playlist_id.strip()).execute()
+
+            # Delete the playlist
+            delete_response = (
+                self.supabase.table("playlists")
+                .delete()
+                .eq("id", playlist_id.strip())
+                .execute()
+            )
+
+            logger.info(f"Successfully deleted playlist {playlist_id.strip()}")
+            return {
+                "success": True,
+                "message": "Playlist deleted successfully"
+            }
+
+        except ValueError as ve:
+            logger.error(f"Validation error in delete_playlist: {str(ve)}")
+            raise ve
+        except Exception as e:
+            error_msg = f"Failed to delete playlist: {str(e)}"
+            logger.error(f"Error deleting playlist {playlist_id.strip()}: {error_msg}")
+            return {"error": error_msg}
+
     def remove_song_from_playlist(self, playlist_id: str, song_id: str) -> Dict[str, any]:
         """
         Remove a song from a playlist.

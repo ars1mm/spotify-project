@@ -24,7 +24,7 @@
 import { useState, useEffect } from 'react'
 import { Box, VStack, HStack, Text, Button } from '@chakra-ui/react'
 import { FiTrash2, FiRefreshCw } from 'react-icons/fi'
-import { ExistingSong } from '@/app/types/admin'
+import { ExistingSong } from '@/types/admin'
 import { useDisclosure } from '@chakra-ui/react'
 
 interface SongManagerProps {

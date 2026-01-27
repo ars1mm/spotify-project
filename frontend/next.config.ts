@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
    experimental:{
     optimizePackageImports: ["@chakra-ui/react","framer-motion"]
    },
+   images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'vrasevfzuwjcqhdaiwjq.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
    async rewrites() {
     return [
       {

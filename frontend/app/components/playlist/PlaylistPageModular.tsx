@@ -42,6 +42,7 @@ export default function PlaylistPage() {
     currentUserId,
     loadAllSongs,
     updatePlaylist,
+    deletePlaylist,
     addSong,
     removeSong
   } = usePlaylistPage();
@@ -69,6 +70,17 @@ export default function PlaylistPage() {
 
   const handleUpdatePlaylist = async (name: string, description: string, isPublic: boolean) => {
     await updatePlaylist(name, description, isPublic);
+    setIsSettingsOpen(false);
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (currentUserId && playlist) {
+      const success = await deletePlaylist(currentUserId);
+      if (success) {
+        toast.success('Playlist deleted');
+        window.location.href = '/library';
+      }
+    }
     setIsSettingsOpen(false);
   };
 
@@ -135,6 +147,7 @@ export default function PlaylistPage() {
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleUpdatePlaylist}
         onAddSongs={handleAddSongs}
+        onDelete={handleDeletePlaylist}
       />
 
       <AddSongsModal

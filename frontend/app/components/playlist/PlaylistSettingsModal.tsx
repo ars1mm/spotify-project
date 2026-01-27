@@ -1,5 +1,7 @@
-import { Box, Flex, Text, Button, VStack, Input, Textarea } from '@chakra-ui/react';
-import { useState } from 'react';
+import { Box, Flex, Text, VStack, Input, Textarea } from '@chakra-ui/react';
+import { useState, useEffect } from 'react';
+import { PrimaryButton, SecondaryButton, DangerButton } from '../ui/Buttons';
+import { APP_CONSTANTS } from '../../constants';
 
 interface PlaylistSettingsModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface PlaylistSettingsModalProps {
   onClose: () => void;
   onSave: (name: string, description: string, isPublic: boolean) => void;
   onAddSongs: () => void;
+  onDelete: () => void;
 }
 
 export function PlaylistSettingsModal({ 
@@ -18,16 +21,32 @@ export function PlaylistSettingsModal({
   playlist, 
   onClose, 
   onSave, 
-  onAddSongs 
+  onAddSongs,
+  onDelete
 }: PlaylistSettingsModalProps) {
   const [editName, setEditName] = useState(playlist.name);
   const [editDescription, setEditDescription] = useState(playlist.description);
   const [editIsPublic, setEditIsPublic] = useState(playlist.is_public);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    setEditName(playlist.name);
+    setEditDescription(playlist.description);
+    setEditIsPublic(playlist.is_public);
+  }, [playlist]);
+
+  const handleDelete = () => {
+    onDelete();
+    setShowDeleteConfirm(false);
+  };
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave(editName, editDescription, editIsPublic);
+    if (!editName.trim()) {
+      return; // Don't save if name is empty
+    }
+    onSave(editName.trim(), editDescription, editIsPublic);
   };
 
   return (
@@ -45,7 +64,7 @@ export function PlaylistSettingsModal({
       onClick={onClose}
     >
       <Box
-        bg="#282828"
+        bg={APP_CONSTANTS.COLORS.CARD_BG}
         borderRadius="8px"
         p={6}
         maxW="500px"
@@ -56,15 +75,12 @@ export function PlaylistSettingsModal({
           <Text fontSize="2xl" fontWeight="bold" color="white">
             Playlist Settings
           </Text>
-          <Button
+          <PrimaryButton
             size="sm"
-            bg="#1db954"
-            color="white"
-            _hover={{ bg: '#1ed760' }}
             onClick={onAddSongs}
           >
             + Add Songs
-          </Button>
+          </PrimaryButton>
         </Flex>
         
         <VStack gap={4} align="stretch">
@@ -73,10 +89,16 @@ export function PlaylistSettingsModal({
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              bg="#3e3e3e"
-              border="none"
-              color="white"
+              bg={APP_CONSTANTS.COLORS.INPUT_BG}
+              border={!editName.trim() ? `1px solid ${APP_CONSTANTS.COLORS.ERROR}` : "none"}
+              color={APP_CONSTANTS.COLORS.TEXT_PRIMARY}
+              placeholder="Playlist name is required"
             />
+            {!editName.trim() && (
+              <Text color={APP_CONSTANTS.COLORS.ERROR} fontSize="xs" mt={1}>
+                Playlist name cannot be empty
+              </Text>
+            )}
           </Box>
           
           <Box>
@@ -92,37 +114,76 @@ export function PlaylistSettingsModal({
           
           <Flex align="center" justify="space-between">
             <Text color="white" fontSize="sm">Public</Text>
-            <Button
+            <PrimaryButton
               size="sm"
-              bg={editIsPublic ? '#1db954' : '#3e3e3e'}
+              bg={editIsPublic ? APP_CONSTANTS.COLORS.PRIMARY : APP_CONSTANTS.COLORS.INPUT_BG}
               onClick={() => setEditIsPublic(!editIsPublic)}
               _hover={{ opacity: 0.8 }}
-              color="white"
             >
               {editIsPublic ? 'Yes' : 'No'}
-            </Button>
+            </PrimaryButton>
           </Flex>
         </VStack>
         
-        <Flex gap={3} mt={6} justify="flex-end">
-          <Button
-            onClick={onClose}
-            bg="transparent"
-            color="white"
-            _hover={{ bg: '#3e3e3e' }}
+        <Flex gap={3} mt={6} justify="space-between">
+          <DangerButton
+            onClick={() => setShowDeleteConfirm(true)}
           >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            bg="#1db954"
-            color="white"
-            _hover={{ bg: '#1ed760' }}
-          >
-            Save
-          </Button>
+            Delete Playlist
+          </DangerButton>
+          
+          <Flex gap={3}>
+            <SecondaryButton onClick={onClose}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton
+              onClick={handleSave}
+              disabled={!editName.trim()}
+              opacity={!editName.trim() ? 0.5 : 1}
+            >
+              Save
+            </PrimaryButton>
+          </Flex>
         </Flex>
       </Box>
+      
+      {showDeleteConfirm && (
+        <Box
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg="rgba(0,0,0,0.9)"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex={1001}
+        >
+          <Box
+            bg={APP_CONSTANTS.COLORS.CARD_BG}
+            borderRadius="8px"
+            p={6}
+            maxW="400px"
+            w="90%"
+          >
+            <Text fontSize="xl" fontWeight="bold" color={APP_CONSTANTS.COLORS.TEXT_PRIMARY} mb={4}>
+              Delete Playlist
+            </Text>
+            <Text color={APP_CONSTANTS.COLORS.TEXT_SECONDARY} mb={6}>
+              Are you sure you want to delete this playlist? This action cannot be undone.
+            </Text>
+            <Flex gap={3} justify="flex-end">
+              <SecondaryButton onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </SecondaryButton>
+              <DangerButton onClick={handleDelete}>
+                Delete
+              </DangerButton>
+            </Flex>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

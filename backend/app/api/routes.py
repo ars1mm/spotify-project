@@ -227,6 +227,17 @@ def update_playlist(playlist_id: str, request: UpdatePlaylistRequest):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
+@router.delete("/playlists/{playlist_id}", tags=["playlists"])
+def delete_playlist(playlist_id: str, user_id: str):
+    """
+    Delete a playlist (only owner can delete)
+    """
+    admin_playlist_service = PlaylistService(use_service_role=True)
+    result = admin_playlist_service.delete_playlist(playlist_id, user_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
 @router.delete("/playlists/{playlist_id}/songs/{song_id}", tags=["playlists"])
 def remove_song_from_playlist(playlist_id: str, song_id: str):
     """

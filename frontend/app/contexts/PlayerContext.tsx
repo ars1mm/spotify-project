@@ -2,16 +2,7 @@
 
 import { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react'
 import toast from 'react-hot-toast'
-
-interface Song {
-  id: string
-  title: string
-  artist: string
-  album?: string
-  audio_url?: string
-  cover_image_url?: string
-  file_path?: string
-}
+import { Song } from '../types'
 
 interface PlayerContextType {
   currentSong: Song | null
@@ -99,7 +90,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
 
 
-  const playSong = (song: Song) => {
+  const playSong = useCallback((song: Song) => {
     console.log('Playing song:', song)
     console.log('Audio URL:', song.audio_url)
     
@@ -129,7 +120,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     
     setCurrentSong(song)
     setIsPlaying(true)
-  }
+  }, [])
 
   const pauseSong = () => {
     setIsPlaying(false)

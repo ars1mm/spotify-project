@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
-import { apiRequest } from '../config/api';
 import { authStorage } from '../lib/auth';
-
-interface Playlist {
-  id: string;
-  name: string;
-  is_public: boolean;
-}
+import { playlistApi } from '../lib/api';
+import { Playlist } from '../types';
 
 export function usePlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -18,8 +13,9 @@ export function usePlaylists() {
 
     setLoading(true);
     try {
-      const response = await apiRequest(`/api/v1/playlists?user_id=${session.user.id}`);
-      setPlaylists(response.playlists || []);
+      const response = await playlistApi.getAll(session.user.id);
+      const userPlaylists = (response.playlists || []).filter((playlist: Playlist) => playlist.user_id === session.user.id);
+      setPlaylists(userPlaylists);
     } catch (error) {
       console.error('Failed to load playlists:', error);
     } finally {

@@ -35,7 +35,7 @@ import AdminLogin from './AdminLogin'
 import SongUploader from './SongUploader'
 import SongManager from './SongManager'
 import ServerLogs from './ServerLogs'
-import { KeyExpiryInfo } from '@/app/types/admin'
+import { KeyExpiryInfo } from '@/types/admin'
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||

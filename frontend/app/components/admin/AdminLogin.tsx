@@ -24,10 +24,10 @@
 import { useState } from 'react'
 import { Box, VStack, HStack, Text, Input, Button } from '@chakra-ui/react'
 import { FiLock } from 'react-icons/fi'
-import { KeyExpiryInfo } from '@/app/types/admin'
+import { KeyExpiryInfo } from '@/types/admin'
 
 interface AdminLoginProps {
-  onLogin: (token: string, keyExpiry: KeyExpiryInfo) => void
+  onLogin: (key: string) => void
   error: string
   isLoading: boolean
 }
