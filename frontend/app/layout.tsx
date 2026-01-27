@@ -1,3 +1,34 @@
+/**
+ * ************************************
+ * EN: ROOT LAYOUT
+ *    Application root layout with providers and fonts
+ * AL: LAYOUT I RRËNJËS
+ *    Layout i rrënjës së aplikacionit me providerë dhe fonte
+ * ************************************
+ * 
+ * THIS FILE:
+ * - Root layout wrapper for all pages
+ * - Sets up fonts (Geist Sans/Mono)
+ * - Wraps app with providers (Chakra, Player, Search)
+ * - Configures Vercel Analytics
+ * 
+ * HOW TO ADD A NEW PROVIDER:
+ * 1. Import the provider component
+ * 2. Wrap children with the provider
+ * 3. Ensure provider is SSR-compatible
+ * 
+ * KJO FILE:
+ * - Mbështjellësi i layout-it rrënjës për të gjitha faqet
+ * - Vendos fontet (Geist Sans/Mono)
+ * - Mbështjell aplikacionin me providerë (Chakra, Player, Search)
+ * - Konfiguron Vercel Analytics
+ * 
+ * SI TË SHTONI NJË PROVIDER TË RI:
+ * 1. Importoni komponentin provider
+ * 2. Mbështillni children me provider-in
+ * 3. Sigurohuni që provider-i është kompatibël me SSR
+ */
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";

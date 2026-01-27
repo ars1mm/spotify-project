@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.services.admin_service import AdminService
+from app.services.admin.admin_service import AdminService
 import json
 
 def bulk_insert_sample_songs():

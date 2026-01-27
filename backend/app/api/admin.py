@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Dict, Any
-from app.services.admin_service import AdminService
-from app.services.supabase_service import SupabaseService
+from app.services.admin.admin_service import AdminService
+from app.services.music.song_service import SongService
+from app.services.external.storage_service import StorageService
+from app.services.music.artist_service import ArtistService
 from app.middleware.admin_auth import verify_admin_token, verify_admin_key, get_admin_key, get_key_expiry_info, rotate_admin_key
 from app.schemas.upload import SongUploadRequest
 import uuid
 import base64
 
-# Public router for admin login (no auth required)
 public_router = APIRouter(prefix="/admin", tags=["admin-auth"])
 
 @public_router.get("/login")
@@ -26,7 +27,7 @@ async def admin_login(key: str = Query(..., description="The SHA-256 admin key")
             return {
                 "success": True,
                 "message": "Admin authentication successful",
-                "token": key,  # Return the key as the bearer token to use
+                "token": key,
                 "key_expiry": expiry_info
             }
         
@@ -56,7 +57,6 @@ async def get_key_hint():
         "key_expiry": expiry_info
     }
 
-# Protected router for admin operations (requires auth)
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(verify_admin_token)])
 
 @router.post("/key/rotate")
@@ -84,9 +84,14 @@ async def get_key_status():
 def get_admin_service() -> AdminService:
     return AdminService()
 
-def get_supabase_service() -> SupabaseService:
-    """Get SupabaseService with service role key for admin operations"""
-    return SupabaseService(use_service_role=True)
+def get_song_service() -> SongService:
+    return SongService(use_service_role=True)
+
+def get_storage_service() -> StorageService:
+    return StorageService(use_service_role=True)
+
+def get_artist_service() -> ArtistService:
+    return ArtistService(use_service_role=True)
 
 @router.post("/songs/bulk")
 async def bulk_create_songs(
@@ -157,11 +162,11 @@ async def cleanup_orphaned_data(
 @router.delete("/songs/{song_id}")
 async def delete_song(
     song_id: str,
-    supabase_service: SupabaseService = Depends(get_supabase_service)
+    song_service: SongService = Depends(get_song_service)
 ):
     """Delete a song and its associated file"""
     try:
-        result = supabase_service.delete_song(song_id)
+        result = song_service.delete_song(song_id)
         return {"success": True, "message": "Song deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -170,22 +175,22 @@ async def delete_song(
 async def list_all_songs(
     page: int = 1,
     limit: int = 50,
-    supabase_service: SupabaseService = Depends(get_supabase_service)
+    song_service: SongService = Depends(get_song_service)
 ):
     """List all songs for admin management"""
     try:
-        result = supabase_service.list_songs(page=page, limit=limit)
+        result = song_service.list_songs(page=page, limit=limit)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/artists")
 async def get_artists(
-    supabase_service: SupabaseService = Depends(get_supabase_service)
+    artist_service: ArtistService = Depends(get_artist_service)
 ):
     """Get list of unique artist names"""
     try:
-        artists = supabase_service.get_unique_artists()
+        artists = artist_service.get_unique_artists()
         return {"artists": artists}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -193,14 +198,14 @@ async def get_artists(
 @router.post("/songs/upload")
 async def upload_song(
     request: SongUploadRequest,
-    supabase_service: SupabaseService = Depends(get_supabase_service)
+    song_service: SongService = Depends(get_song_service),
+    storage_service: StorageService = Depends(get_storage_service)
 ):
     """
     Upload a new song (Admin only)
     - **request**: Base64 encoded song data with metadata
     """
     try:
-        # Helper to decode base64
         def decode_str(b64_str: str) -> str:
             if not b64_str: return None
             return base64.b64decode(b64_str).decode('utf-8')
@@ -213,44 +218,33 @@ async def upload_song(
         file_name = decode_str(request.file_name)
         content_type = decode_str(request.content_type)
         
-        # Decode file content (bytes)
         file_content = base64.b64decode(request.file_content)
         cover_file_content = base64.b64decode(request.cover_file_content)
         
-        # Calculate duration from audio file metadata
-        duration_seconds = request.duration_seconds or 174  # Use provided or default
+        duration_seconds = request.duration_seconds or 174
         try:
             import io
             from mutagen import File as MutagenFile
             
-            # Try to extract duration from audio metadata
             audio_file = MutagenFile(io.BytesIO(file_content))
             if audio_file and hasattr(audio_file, 'info') and hasattr(audio_file.info, 'length'):
                 duration_seconds = int(audio_file.info.length)
         except Exception as e:
             print(f"Could not extract duration: {e}")
-            # Keep the provided duration or default
         
-        # Sanitize filename for Supabase Storage
         import re
         sanitized_name = re.sub(r'[^a-zA-Z0-9._-]', '_', file_name)
-        # Remove songs/ prefix since it's already in the bucket path
         file_path = f"{artist.lower().replace(' ', '_')}_{title.lower().replace(' ', '_')}.mp3"
         
-        # If file_path in database has songs/ prefix, remove it for storage
         storage_path = file_path.replace('songs/', '') if file_path.startswith('songs/') else file_path
         
-        # Generate cover image path
         cover_ext = cover_file_name.split('.')[-1] if '.' in cover_file_name else 'jpg'
         cover_path = f"{artist.lower().replace(' ', '_')}_{title.lower().replace(' ', '_')}.{cover_ext}"
         
-        # 1. Upload cover image to covers bucket
-        cover_url = supabase_service.upload_cover(cover_file_content, cover_path, cover_content_type)
+        cover_url = storage_service.upload_cover(cover_file_content, cover_path, cover_content_type)
         
-        # 2. Upload audio file to songs bucket
-        uploaded_path = supabase_service.upload_file(file_content, storage_path, content_type)
+        uploaded_path = storage_service.upload_file(file_content, storage_path, content_type)
         
-        # 3. Insert metadata to Database with proper structure
         song_data = {
             "title": title,
             "artist": artist,
@@ -260,7 +254,7 @@ async def upload_song(
             "cover_image_url": cover_url
         }
         
-        result = supabase_service.insert_song(song_data)
+        result = song_service.insert_song(song_data)
         return {"success": True, "data": result}
         
     except Exception as e:
