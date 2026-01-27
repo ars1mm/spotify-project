@@ -84,6 +84,8 @@ export default function CreatePlaylistPage() {
       if (response.success) {
         toast.dismiss()
         toast.success('Playlist created successfully!')
+        // Trigger sidebar refresh
+        window.dispatchEvent(new CustomEvent('playlistsChanged'))
         router.push('/library')
       }
     } catch (error) {

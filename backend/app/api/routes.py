@@ -174,19 +174,39 @@ def create_playlist(request: CreatePlaylistRequest):
 @router.get("/playlists", tags=["playlists"])
 def get_playlists(user_id: str = None, public_only: bool = False):
     """
-    Get playlists
+    Get playlists - returns user's own playlists (public + private) plus other public playlists
     """
-    result = playlist_service.get_playlists(user_id=user_id, public_only=public_only)
+    admin_playlist_service = PlaylistService(use_service_role=True)
+    result = admin_playlist_service.get_playlists(user_id=user_id, public_only=public_only)
     if result.get("error"):
         raise HTTPException(status_code=500, detail=result["error"])
     return result
+
+@router.get("/playlists/private", tags=["playlists"])
+def get_private_playlists(user_id: str):
+    """
+    Get only user's private playlists
+    """
+    try:
+        private_playlists = (
+            playlist_service.supabase.table("playlists")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("is_public", False)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return {"playlists": private_playlists.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/playlists/{playlist_id}", tags=["playlists"])
 def get_playlist(playlist_id: str):
     """
     Get a specific playlist with its songs
     """
-    result = playlist_service.get_playlist_by_id(playlist_id)
+    admin_playlist_service = PlaylistService(use_service_role=True)
+    result = admin_playlist_service.get_playlist_by_id(playlist_id)
     if result.get("error"):
         raise HTTPException(status_code=404, detail=result["error"])
     return result

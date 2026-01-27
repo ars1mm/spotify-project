@@ -26,6 +26,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     loadPlaylists()
+    
+    // Listen for playlist changes
+    const handlePlaylistsChanged = () => {
+      loadPlaylists()
+    }
+    
+    window.addEventListener('playlistsChanged', handlePlaylistsChanged)
+    
+    return () => {
+      window.removeEventListener('playlistsChanged', handlePlaylistsChanged)
+    }
   }, [])
 
   const loadPlaylists = async () => {
@@ -34,6 +45,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     setLoading(true)
     try {
+      // Get all playlists for the user (includes both public and private)
       const response = await apiRequest(`/api/v1/playlists?user_id=${session.user.id}`)
       setPlaylists(response.playlists || [])
     } catch (error) {

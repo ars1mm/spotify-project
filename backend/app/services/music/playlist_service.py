@@ -140,7 +140,38 @@ class PlaylistService(BaseSupabaseClient):
             if public_only:
                 query = query.eq("is_public", True)
             elif user_id:
-                query = query.eq("user_id", user_id.strip())
+                # For a specific user, return their own playlists (both public and private)
+                # plus all other public playlists
+                user_playlists = (
+                    self.supabase.table("playlists")
+                    .select("*")
+                    .eq("user_id", user_id.strip())
+                    .order("created_at", desc=True)
+                    .execute()
+                )
+                
+                public_playlists = (
+                    self.supabase.table("playlists")
+                    .select("*")
+                    .eq("is_public", True)
+                    .neq("user_id", user_id.strip())  # Exclude user's own playlists to avoid duplicates
+                    .order("created_at", desc=True)
+                    .execute()
+                )
+                
+                # Combine user's playlists with public playlists
+                all_playlists = user_playlists.data + public_playlists.data
+                
+                # Ensure boolean values are properly converted
+                for playlist in all_playlists:
+                    if 'is_public' in playlist:
+                        playlist['is_public'] = bool(playlist['is_public'])
+                        
+                # Sort by creation date (newest first)
+                all_playlists.sort(key=lambda x: x['created_at'], reverse=True)
+                
+                logger.info(f"Retrieved {len(all_playlists)} playlists for user {user_id}")
+                return {"playlists": all_playlists}
 
             # Order by creation date (newest first)
             query = query.order("created_at", desc=True)
