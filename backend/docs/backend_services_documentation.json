@@ -1,0 +1,494 @@
+{
+  "titull": "Dokumentimi i Shërbimeve të Backend-it",
+  "pershkrimi": "Ky dokument përmban shpjegime të hollësishme dhe pyetje-përgjigje për të gjitha shërbimet e backend-it të aplikacionit Spotify Clone",
+  "versioni": "1.0",
+  "data_krijimit": "2026-01-27",
+  "sherbimet": {
+    "auth_service": {
+      "emri": "Shërbimi i Autentifikimit",
+      "pershkrimi": "Ky shërbim menaxhon të gjitha operacionet e autentifikimit të përdoruesve, duke përfshirë regjistrimin, hyrjen, dhe rivendosjen e fjalëkalimit.",
+      "skedari": "app/services/auth/auth_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "create_user",
+          "pershkrimi": "Krijon një llogari të re përdoruesi",
+          "parametrat": [
+            "email",
+            "password",
+            "name"
+          ],
+          "shembull": "auth_service.create_user(email='test@example.com', password='Pass123!', name='Emri')"
+        },
+        {
+          "emri": "login_user",
+          "pershkrimi": "Fut përdoruesin në llogari",
+          "parametrat": [
+            "email",
+            "password"
+          ],
+          "shembull": "auth_service.login_user(email='test@example.com', password='Pass123!')"
+        },
+        {
+          "emri": "reset_password",
+          "pershkrimi": "Dërgon email për rivendosjen e fjalëkalimit",
+          "parametrat": [
+            "email"
+          ],
+          "shembull": "auth_service.reset_password(email='test@example.com')"
+        },
+        {
+          "emri": "update_password",
+          "pershkrimi": "Përditëson fjalëkalimin e përdoruesit",
+          "parametrat": [
+            "access_token",
+            "refresh_token",
+            "new_password"
+          ],
+          "shembull": "auth_service.update_password(access_token='token', new_password='NewPass123!')"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Si funksionon procesi i regjistrimit?",
+          "pergjigje": "Kur një përdorues regjistrohet, sistemi krijon një llogari të re në Supabase Auth. Email-i dhe fjalëkalimi ruhen në mënyrë të sigurt, dhe përdoruesi merr një token aksesi për sesionin."
+        },
+        {
+          "pyetje": "Çfarë ndodh kur përdoruesi harron fjalëkalimin?",
+          "pergjigje": "Sistemi dërgon një email me link për rivendosjen e fjalëkalimit. Ky link përmban një token të veçantë që lejon përdoruesin të vendosë një fjalëkalim të ri."
+        },
+        {
+          "pyetje": "Si mbrohet fjalëkalimi i përdoruesit?",
+          "pergjigje": "Supabase Auth përdor hashing të sigurt (bcrypt) për të ruajtur fjalëkalimet. Kurrë nuk ruhet fjalëkalimi në formë teksti të thjeshtë."
+        }
+      ]
+    },
+    "song_service": {
+      "emri": "Shërbimi i Këngëve",
+      "pershkrimi": "Menaxhon operacionet e lidhura me këngët, duke përfshirë listimin, kërkimin, dhe marrjen e detajeve të këngëve.",
+      "skedari": "app/services/music/song_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "list_songs",
+          "pershkrimi": "Merr listën e këngëve me paginim",
+          "parametrat": [
+            "page",
+            "limit"
+          ],
+          "shembull": "song_service.list_songs(page=1, limit=20)"
+        },
+        {
+          "emri": "search_songs",
+          "pershkrimi": "Kërkon këngë sipas fjalëve kyçe",
+          "parametrat": [
+            "query",
+            "limit"
+          ],
+          "shembull": "song_service.search_songs(query='Ed Sheeran', limit=10)"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Si funksionon paginimi i këngëve?",
+          "pergjigje": "Paginimi përdor parametrat 'page' dhe 'limit'. Për shembull, page=2 dhe limit=20 kthen këngët nga 21 deri në 40. Limiti maksimal është 50 këngë për kërkesë."
+        },
+        {
+          "pyetje": "Si bëhet kërkimi i këngëve?",
+          "pergjigje": "Kërkimi përdor Full-Text Search të Supabase, duke kërkuar në titullin e këngës, emrin e artistit, dhe albumit."
+        },
+        {
+          "pyetje": "Si optimizohet performanca e kërkimit?",
+          "pergjigje": "Përdoren indekse në databazë dhe limitohet numri i rezultateve. Gjithashtu, vetëm fushat e nevojshme kthehen për të minimizuar volumin e të dhënave."
+        }
+      ]
+    },
+    "playlist_service": {
+      "emri": "Shërbimi i Playlist-eve",
+      "pershkrimi": "Menaxhon krijimin, modifikimin, dhe fshirjen e playlist-eve, si dhe shtimin/heqjen e këngëve nga playlist-et.",
+      "skedari": "app/services/music/playlist_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "create_playlist",
+          "pershkrimi": "Krijon një playlist të re",
+          "parametrat": [
+            "name",
+            "description",
+            "is_public",
+            "user_id",
+            "song_ids"
+          ],
+          "shembull": "playlist_service.create_playlist(name='Playlist im', user_id='uuid', is_public=True)"
+        },
+        {
+          "emri": "get_playlists",
+          "pershkrimi": "Merr listën e playlist-eve",
+          "parametrat": [
+            "user_id",
+            "public_only"
+          ],
+          "shembull": "playlist_service.get_playlists(user_id='uuid')"
+        },
+        {
+          "emri": "add_song_to_playlist",
+          "pershkrimi": "Shton një këngë në playlist",
+          "parametrat": [
+            "playlist_id",
+            "song_id"
+          ],
+          "shembull": "playlist_service.add_song_to_playlist(playlist_id='uuid', song_id='uuid')"
+        },
+        {
+          "emri": "remove_song_from_playlist",
+          "pershkrimi": "Heq një këngë nga playlist",
+          "parametrat": [
+            "playlist_id",
+            "song_id"
+          ],
+          "shembull": "playlist_service.remove_song_from_playlist(playlist_id='uuid', song_id='uuid')"
+        },
+        {
+          "emri": "delete_playlist",
+          "pershkrimi": "Fshin një playlist",
+          "parametrat": [
+            "playlist_id",
+            "user_id"
+          ],
+          "shembull": "playlist_service.delete_playlist(playlist_id='uuid', user_id='uuid')"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Kush mund të shohë playlist-et private?",
+          "pergjigje": "Vetëm pronari i playlist-it mund ta shohë. Playlist-et publike janë të dukshme për të gjithë përdoruesit."
+        },
+        {
+          "pyetje": "Si kontrollohet kush mund të fshijë një playlist?",
+          "pergjigje": "Vetëm përdoruesi që ka krijuar playlist-in mund ta fshijë. Sistemi kontrollon user_id përpara se të lejojë fshirjen."
+        },
+        {
+          "pyetje": "A mund të shtohet e njëjta këngë dy herë në një playlist?",
+          "pergjigje": "Jo, sistemi kontrollon nëse kënga ekziston tashmë në playlist dhe kthen gabim nëse po."
+        }
+      ]
+    },
+    "like_service": {
+      "emri": "Shërbimi i Pëlqimeve",
+      "pershkrimi": "Menaxhon funksionalitetin e pëlqimit të këngëve nga përdoruesit.",
+      "skedari": "app/services/music/like_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "like_song",
+          "pershkrimi": "Pëlqen një këngë",
+          "parametrat": [
+            "user_id",
+            "song_id"
+          ],
+          "shembull": "like_service.like_song(user_id='uuid', song_id='uuid')"
+        },
+        {
+          "emri": "unlike_song",
+          "pershkrimi": "Heq pëlqimin nga një këngë",
+          "parametrat": [
+            "user_id",
+            "song_id"
+          ],
+          "shembull": "like_service.unlike_song(user_id='uuid', song_id='uuid')"
+        },
+        {
+          "emri": "get_liked_songs",
+          "pershkrimi": "Merr listën e këngëve të pëlqyera",
+          "parametrat": [
+            "user_id"
+          ],
+          "shembull": "like_service.get_liked_songs(user_id='uuid')"
+        },
+        {
+          "emri": "is_song_liked",
+          "pershkrimi": "Kontrollon nëse një këngë është e pëlqyer",
+          "parametrat": [
+            "user_id",
+            "song_id"
+          ],
+          "shembull": "like_service.is_song_liked(user_id='uuid', song_id='uuid')"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Ku ruhen të dhënat e pëlqimeve?",
+          "pergjigje": "Të dhënat ruhen në tabelën 'liked_songs' në Supabase, me lidhje mes user_id dhe song_id."
+        },
+        {
+          "pyetje": "Si ndikon funksioni i pëlqimit në ranking-un e këngëve?",
+          "pergjigje": "Numri i pëlqimeve përdoret nga TrendingService për të përcaktuar këngët më të njohura."
+        },
+        {
+          "pyetje": "A mund të pëlqehet e njëjta këngë dy herë?",
+          "pergjigje": "Jo, sistemi kontrollon nëse pëlqimi ekziston tashmë dhe parandalon dyfishimin."
+        }
+      ]
+    },
+    "trending_service": {
+      "emri": "Shërbimi i Trendeve",
+      "pershkrimi": "Llogarit dhe kthen këngët dhe albumet më të njohura bazuar në aktivitetin e përdoruesve.",
+      "skedari": "app/services/music/trending_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "get_trending_songs",
+          "pershkrimi": "Merr këngët në trend",
+          "parametrat": [
+            "limit"
+          ],
+          "shembull": "trending_service.get_trending_songs(limit=10)"
+        },
+        {
+          "emri": "get_trending_albums",
+          "pershkrimi": "Merr albumet në trend",
+          "parametrat": [
+            "limit"
+          ],
+          "shembull": "trending_service.get_trending_albums(limit=10)"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Si llogariten trendet?",
+          "pergjigje": "Trendet llogariten duke kombinuar numrin e pëlqimeve, numrin e dëgjimeve, dhe aktivitetin e fundit të përdoruesve."
+        },
+        {
+          "pyetje": "Sa shpesh përditësohen trendet?",
+          "pergjigje": "Trendet llogariten në kohë reale kur kërkohen, por mund të cache-ohen për performancë më të mirë."
+        }
+      ]
+    },
+    "spotify_service": {
+      "emri": "Shërbimi i Spotify API",
+      "pershkrimi": "Ndërvepron me Spotify API për të marrë informacione rreth këngëve dhe artistëve.",
+      "skedari": "app/services/external/spotify_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "get_track_download",
+          "pershkrimi": "Merr informacionet e një këngë nga Spotify",
+          "parametrat": [
+            "track"
+          ],
+          "shembull": "spotify_service.get_track_download(track='Lego House Ed Sheeran')"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Çfarë informacionesh merren nga Spotify?",
+          "pergjigje": "Merren metadata si titulli, artisti, albumi, kohëzgjatja, dhe URL-ja e kopertinës."
+        },
+        {
+          "pyetje": "A ka kufizime në numrin e kërkesave?",
+          "pergjigje": "Po, ka rate limiting prej 60 kërkesash për 30 sekonda për IP për të mbrojtur shërbimin."
+        },
+        {
+          "pyetje": "Çfarë ndodh nëse Spotify API nuk përgjigjet?",
+          "pergjigje": "Sistemi kthen një gabim 500 dhe lojon problemin për debugging."
+        }
+      ]
+    },
+    "supabase_service": {
+      "emri": "Shërbimi i Supabase",
+      "pershkrimi": "Ofron lidhje me databazën Supabase dhe menaxhon operacionet CRUD bazë.",
+      "skedari": "app/services/external/supabase_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "get_client",
+          "pershkrimi": "Kthen klientin e konfiguruar të Supabase",
+          "parametrat": [],
+          "shembull": "supabase = supabase_service.get_client()"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Si sigurohet lidhja me Supabase?",
+          "pergjigje": "Përdoren çelësa API që ruhen si variabla mjedisi (.env). Ka dy lloje çelësash: anon key për operacione publike dhe service role key për operacione administrative."
+        },
+        {
+          "pyetje": "Si menaxhohen gabimet e databazës?",
+          "pergjigje": "Të gjitha shërbimet kapin përjashtimet dhe kthejnë objekte gabimi të strukturuara për trajtim të pastër."
+        }
+      ]
+    },
+    "storage_service": {
+      "emri": "Shërbimi i Ruajtjes",
+      "pershkrimi": "Menaxhon ngarkimin dhe shkarkimin e skedarëve audio dhe imazheve në Supabase Storage.",
+      "skedari": "app/services/external/storage_service.py",
+      "funksionet_kryesore": [
+        {
+          "emri": "upload_file",
+          "pershkrimi": "Ngarkon një skedar në storage",
+          "parametrat": [
+            "file",
+            "bucket",
+            "path"
+          ],
+          "shembull": "storage_service.upload_file(file=audio_file, bucket='songs', path='song.mp3')"
+        },
+        {
+          "emri": "get_public_url",
+          "pershkrimi": "Merr URL-në publike të një skedari",
+          "parametrat": [
+            "bucket",
+            "path"
+          ],
+          "shembull": "storage_service.get_public_url(bucket='songs', path='song.mp3')"
+        }
+      ],
+      "pyetje_pergjigje": [
+        {
+          "pyetje": "Cilat lloje skedarësh mbështeten?",
+          "pergjigje": "Mbështeten skedarë audio (MP3, WAV, FLAC) dhe imazhe (JPG, PNG, WebP) për kopertina."
+        },
+        {
+          "pyetje": "Si organizohen skedarët në storage?",
+          "pergjigje": "Skedarët organizohen në bucket-e të ndryshme: 'songs' për audio, 'covers' për kopertina, dhe 'avatars' për foto profili."
+        }
+      ]
+    }
+  },
+  "pyetje_te_pergjithshme": [
+    {
+      "pyetje": "Si komunikojnë shërbimet mes vete?",
+      "pergjigje": "Shërbimet janë të pavarura dhe komunikojnë përmes API routes. Çdo shërbim ka një përgjegjësi të vetme sipas parimit Single Responsibility."
+    },
+    {
+      "pyetje": "Si menaxhohen gabimet në backend?",
+      "pergjigje": "Të gjitha shërbimet kthejnë një objekt me fushë 'error' nëse ndodh një problem. Routes konvertojnë këto në HTTP exceptions me kode të përshtatshme (400, 401, 404, 500)."
+    },
+    {
+      "pyetje": "Si testohen shërbimet?",
+      "pergjigje": "Ekzistojnë teste unitare në dosjen 'tests/' që verifikojnë funksionalitetin e çdo shërbimi."
+    },
+    {
+      "pyetje": "Si bëhet logging dhe debugging?",
+      "pergjigje": "Aplikacioni përdor Python logging për të regjistruar ngjarje dhe gabime. Në zhvillim, logs shfaqen në console."
+    },
+    {
+      "pyetje": "Çfarë framework-u përdoret?",
+      "pergjigje": "Backend-i përdor FastAPI, një framework modern Python që ofron performancë të lartë dhe dokumentim automatik API."
+    },
+    {
+      "pyetje": "Si mbrohet API nga sulmet?",
+      "pergjigje": "Përdoret rate limiting për të kufizuar numrin e kërkesave, CORS për të kontrolluar aksesin, dhe validim i të dhënave me Pydantic."
+    }
+  ],
+  "endpoints_api": {
+    "autentifikim": [
+      {
+        "metoda": "POST",
+        "rruga": "/api/auth/signup",
+        "pershkrimi": "Regjistron një përdorues të ri"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/auth/login",
+        "pershkrimi": "Fut përdoruesin në llogari"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/auth/reset-password",
+        "pershkrimi": "Dërgon email për rivendosjen e fjalëkalimit"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/auth/update-password",
+        "pershkrimi": "Përditëson fjalëkalimin"
+      }
+    ],
+    "kenge": [
+      {
+        "metoda": "GET",
+        "rruga": "/api/songs",
+        "pershkrimi": "Merr listën e këngëve me paginim"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/search?q={query}",
+        "pershkrimi": "Kërkon këngë"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/songs/liked?user_id={id}",
+        "pershkrimi": "Merr këngët e pëlqyera"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/songs/{song_id}/like",
+        "pershkrimi": "Pëlqen një këngë"
+      },
+      {
+        "metoda": "DELETE",
+        "rruga": "/api/songs/{song_id}/like",
+        "pershkrimi": "Heq pëlqimin"
+      }
+    ],
+    "playliste": [
+      {
+        "metoda": "GET",
+        "rruga": "/api/playlists",
+        "pershkrimi": "Merr listën e playlist-eve"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/playlists",
+        "pershkrimi": "Krijon një playlist të re"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/playlists/{id}",
+        "pershkrimi": "Merr detajet e një playlist-i"
+      },
+      {
+        "metoda": "PUT",
+        "rruga": "/api/playlists/{id}",
+        "pershkrimi": "Përditëson një playlist"
+      },
+      {
+        "metoda": "DELETE",
+        "rruga": "/api/playlists/{id}",
+        "pershkrimi": "Fshin një playlist"
+      },
+      {
+        "metoda": "POST",
+        "rruga": "/api/playlists/{id}/songs/{song_id}",
+        "pershkrimi": "Shton këngë në playlist"
+      },
+      {
+        "metoda": "DELETE",
+        "rruga": "/api/playlists/{id}/songs/{song_id}",
+        "pershkrimi": "Heq këngë nga playlist-i"
+      }
+    ],
+    "trende": [
+      {
+        "metoda": "GET",
+        "rruga": "/api/trending/songs",
+        "pershkrimi": "Merr këngët në trend"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/trending/albums",
+        "pershkrimi": "Merr albumet në trend"
+      }
+    ],
+    "dokumentim": [
+      {
+        "metoda": "GET",
+        "rruga": "/api/dokumentimi",
+        "pershkrimi": "Shfaq dokumentimin kryesor të API"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/dokumentimi/shembuj",
+        "pershkrimi": "Shfaq shembuj kodi"
+      },
+      {
+        "metoda": "GET",
+        "rruga": "/api/dokumentimi/troubleshooting",
+        "pershkrimi": "Shfaq guidin e troubleshooting"
+      }
+    ]
+  }
+}

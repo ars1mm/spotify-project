@@ -316,6 +316,17 @@ def get_troubleshooting_guide():
     docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "docs", "troubleshooting.html")
     return FileResponse(docs_path, media_type="text/html")
 
+@router.get("/dokumentimi/sherbimet", tags=["documentation"])
+def get_backend_services_documentation():
+    """
+    Shërben dokumentimin e shërbimeve të backend-it në format JSON
+    - Përshkrime të hollësishme për çdo shërbim
+    - Pyetje dhe përgjigje (Q&A) për çdo shërbim
+    - Lista e të gjitha endpoint-eve API
+    """
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "docs", "backend_services_documentation.json")
+    return FileResponse(docs_path, media_type="application/json")
+
 @router.get("/songs/{song_id}/liked", tags=["songs"])
 def check_song_liked(song_id: str, user_id: str):
     """Check if song is liked"""
