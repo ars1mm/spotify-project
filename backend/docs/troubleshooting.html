@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubleshooting - Spotify Project</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1db954; border-bottom: 3px solid #1db954; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; }
+        h3 { color: #666; }
+        .nav { background: #1db954; padding: 15px; margin: -30px -30px 30px -30px; border-radius: 8px 8px 0 0; }
+        .nav a { color: white; text-decoration: none; margin-right: 20px; font-weight: bold; }
+        .nav a:hover { text-decoration: underline; }
+        .problem { background: #f8d7da; padding: 15px; margin: 10px 0; border-left: 4px solid #dc3545; border-radius: 4px; }
+        .solution { background: #d4edda; padding: 15px; margin: 10px 0; border-left: 4px solid #28a745; border-radius: 4px; }
+        .warning { background: #fff3cd; padding: 15px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 4px; }
+        pre { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .debug-step { background: #e3f2fd; padding: 10px; margin: 5px 0; border-left: 3px solid #2196f3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="api_documentation.html">Kryesore</a>
+            <a href="code_examples.html">Shembuj Kodi</a>
+            <a href="#common-errors">Gabime të Shpeshta</a>
+            <a href="#debugging">Debugging</a>
+            <a href="#performance">Performance</a>
+        </div>
+
+        <h1>Troubleshooting dhe Debugging</h1>
+
+        <section id="common-errors">
+            <h2>Gabime të Shpeshta dhe Zgjidhjet</h2>
+
+            <h3>Supabase Connection Issues</h3>
+            <div class="problem">
+                <strong>Gabimi:</strong> <code>supabase.exceptions.APIError: Invalid API key</code>
+            </div>
+            <div class="solution">
+                <strong>Zgjidhja:</strong>
+                <ol>
+                    <li>Kontrollo <code>.env</code> file:
+                        <pre><code>SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key</code></pre>
+                    </li>
+                    <li>Verifiko që çelësat janë të saktë në Supabase Dashboard</li>
+                    <li>Kontrollo që projekti Supabase është aktiv</li>
+                </ol>
+            </div>
+
+            <h3>Database Permission Errors</h3>
+            <div class="problem">
+                <strong>Gabimi:</strong> <code>new row violates row-level security policy</code>
+            </div>
+            <div class="solution">
+                <strong>Zgjidhja:</strong>
+                <div class="debug-step">
+                    <strong>Hapi 1:</strong> Kontrollo RLS Policies në Supabase
+                    <pre><code>-- Shembull policy për playlist-at
+CREATE POLICY "Users can create playlists" ON playlists
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Shembull policy për lexim
+CREATE POLICY "Users can view public playlists" ON playlists
+FOR SELECT USING (is_public = true OR auth.uid() = user_id);</code></pre>
+                </div>
+                <div class="debug-step">
+                    <strong>Hapi 2:</strong> Përdor Service Role për operacione admin
+                    <pre><code># Gabim - përdor anon key për admin operations
+service = PlaylistService()  # use_service_role=False
+
+# Saktë - përdor service role
+admin_service = PlaylistService(use_service_role=True)</code></pre>
+                </div>
+            </div>
+
+            <h3>Rate Limiting Errors</h3>
+            <div class="problem">
+                <strong>Gabimi:</strong> <code>429 Too Many Requests</code>
+            </div>
+            <div class="solution">
+                <strong>Zgjidhja:</strong>
+                <ol>
+                    <li>Prit disa sekonda dhe provo përsëri</li>
+                    <li>Implemento exponential backoff:
+                        <pre><code>import time
+import random
+
+def retry_with_backoff(func, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            wait_time = (2 ** attempt) + random.uniform(0, 1)
+            time.sleep(wait_time)</code></pre>
+                    </li>
+                    <li>Në development, mund të rrisësh limitet në <code>rate_limiter.py</code></li>
+                </ol>
+            </div>
+
+            <h3>File Upload Issues</h3>
+            <div class="problem">
+                <strong>Gabimi:</strong> <code>File upload failed: Bucket not found</code>
+            </div>
+            <div class="solution">
+                <strong>Zgjidhja:</strong>
+                <div class="debug-step">
+                    <strong>Kontrollo Bucket Configuration:</strong>
+                    <ol>
+                        <li>Hyr në Supabase Dashboard → Storage</li>
+                        <li>Krijo bucket "songs" nëse nuk ekziston</li>
+                        <li>Vendos policies për upload:
+                            <pre><code>-- Policy për upload
+CREATE POLICY "Authenticated users can upload" ON storage.objects
+FOR INSERT WITH CHECK (
+    bucket_id = 'songs' AND 
+    auth.role() = 'authenticated'
+);</code></pre>
+                        </li>
+                        <li>Kontrollo <code>SUPABASE_BUCKET_NAME</code> në <code>.env</code></li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3>JWT Token Issues</h3>
+            <div class="problem">
+                <strong>Gabimi:</strong> <code>JWT token expired</code>
+            </div>
+            <div class="solution">
+                <strong>Zgjidhja:</strong>
+                <div class="debug-step">
+                    <strong>Implemento Token Refresh:</strong>
+                    <pre><code>async def refresh_token_if_needed(access_token, refresh_token):
+    try:
+        # Kontrollo nëse token-i është i vlefshëm
+        response = await supabase.auth.get_user(access_token)
+        return access_token
+    except:
+        # Rifresko token-in
+        refresh_response = await supabase.auth.refresh_session(refresh_token)
+        return refresh_response.session.access_token</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="debugging">
+            <h2>Teknika Debugging</h2>
+
+            <h3>Logging i Detajuar</h3>
+            <div class="debug-step">
+                <strong>Aktivizo Debug Logging:</strong>
+                <pre><code># Në .env
+DEBUG=True
+LOG_LEVEL=DEBUG
+
+# Në kodin tuaj
+import logging
+logger = logging.getLogger(__name__)
+
+def create_playlist(self, name, description, is_public, user_id):
+    logger.debug(f"Creating playlist with data: {locals()}")
+    
+    try:
+        # Operacioni
+        logger.info(f"Successfully created playlist: {name}")
+    except Exception as e:
+        logger.error(f"Failed to create playlist: {str(e)}", exc_info=True)</code></pre>
+            </div>
+
+            <h3>Database Query Debugging</h3>
+            <div class="debug-step">
+                <strong>Testo Query-të Direkt:</strong>
+                <pre><code># Në Python shell ose Jupyter notebook
+from app.services.base.base_client import BaseSupabaseClient
+
+client = BaseSupabaseClient(use_service_role=True)
+
+# Testo query-në
+result = client.supabase.table("playlists").select("*").execute()
+print(f"Found {len(result.data)} playlists")
+
+# Testo me filtra
+result = client.supabase.table("playlists").select("*").eq("user_id", "test-user-id").execute()
+print(result.data)</code></pre>
+            </div>
+
+            <h3>API Testing me curl</h3>
+            <div class="debug-step">
+                <strong>Testo Endpoint-et Direkt:</strong>
+                <pre><code># Test login
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password123"}'
+
+# Test me token
+curl -X GET http://127.0.0.1:8000/api/v1/playlists \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# Test playlist creation
+curl -X POST http://127.0.0.1:8000/api/v1/playlists \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"name": "Test Playlist", "user_id": "user-id", "is_public": true}'</code></pre>
+            </div>
+
+            <h3>Frontend-Backend Communication</h3>
+            <div class="debug-step">
+                <strong>Debugging Network Requests:</strong>
+                <pre><code>// Në browser console
+// Shiko të gjitha kërkesave
+console.log('Making API request to:', url);
+console.log('Request data:', requestData);
+
+fetch(url, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(requestData)
+})
+.then(response => {
+    console.log('Response status:', response.status);
+    return response.json();
+})
+.then(data => {
+    console.log('Response data:', data);
+})
+.catch(error => {
+    console.error('Request failed:', error);
+});</code></pre>
+            </div>
+        </section>
+
+        <section id="performance">
+            <h2>Performance Debugging</h2>
+
+            <h3>Slow Database Queries</h3>
+            <div class="warning">
+                <strong>Shenjat:</strong> API-ja përgjigjet ngadalë, timeout errors
+            </div>
+            <div class="solution">
+                <strong>Zgjidhjet:</strong>
+                <div class="debug-step">
+                    <strong>1. Shto Indekse:</strong>
+                    <pre><code>-- Në Supabase SQL Editor
+CREATE INDEX idx_playlists_user_id ON playlists(user_id);
+CREATE INDEX idx_playlist_songs_playlist_id ON playlist_songs(playlist_id);
+CREATE INDEX idx_songs_title ON songs USING gin(to_tsvector('english', title));</code></pre>
+                </div>
+                <div class="debug-step">
+                    <strong>2. Optimizo Query-të:</strong>
+                    <pre><code># Gabim - N+1 query problem
+playlists = supabase.table("playlists").select("*").execute()
+for playlist in playlists.data:
+    songs = supabase.table("playlist_songs").select("*").eq("playlist_id", playlist["id"]).execute()
+
+# Saktë - një query me join
+result = supabase.table("playlists").select("*, playlist_songs(*, songs(*))").execute()</code></pre>
+                </div>
+            </div>
+
+            <h3>Memory Usage Issues</h3>
+            <div class="debug-step">
+                <strong>Monitor Memory:</strong>
+                <pre><code>import psutil
+import os
+
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_mb = process.memory_info().rss / 1024 / 1024
+    logger.info(f"Memory usage: {memory_mb:.2f} MB")
+
+# Përdore në funksione që konsumojnë shumë memory
+def bulk_insert_songs(self, songs_data):
+    log_memory_usage()
+    # ... procesimi
+    log_memory_usage()</code></pre>
+            </div>
+
+            <h3>API Response Time Monitoring</h3>
+            <div class="debug-step">
+                <strong>Shto Timing Middleware:</strong>
+                <pre><code>import time
+from fastapi import Request
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    
+    response.headers["X-Process-Time"] = str(process_time)
+    
+    if process_time > 1.0:  # Log slow requests
+        logger.warning(f"Slow request: {request.url} took {process_time:.2f}s")
+    
+    return response</code></pre>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

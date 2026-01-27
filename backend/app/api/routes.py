@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from app.services.external.spotify_service import SpotifyService
 from app.services.music.song_service import SongService
@@ -8,6 +9,7 @@ from app.services.music.like_service import LikeService
 from app.services.music.trending_service import TrendingService
 from app.schemas.track import TrackDownloadResponse
 from app.core.rate_limiter import limiter
+import os
 
 router = APIRouter()
 spotify_service = SpotifyService()
@@ -18,12 +20,15 @@ like_service = LikeService()
 trending_service = TrendingService()
 
 @router.get("/songs", tags=["songs"])
-def list_songs(page: int = 1, limit: int = 50):
+async def list_songs(page: int = 1, limit: int = 20):
     """
-    List all songs from the Supabase bucket (demo only)
+    List songs with optimized pagination
     - **page**: Page number (default 1)
-    - **limit**: Number of songs per page (default 50)
+    - **limit**: Number of songs per page (default 20, max 50)
     """
+    # Limit max results to prevent performance issues
+    limit = min(limit, 50)
+    
     result = song_service.list_songs(page=page, limit=limit)
     if result.get("error"):
         raise HTTPException(status_code=500, detail=result["error"])
@@ -286,6 +291,30 @@ def unlike_song(song_id: str, user_id: str):
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+@router.get("/dokumentimi", tags=["documentation"])
+def get_api_documentation():
+    """
+    Shërben dokumentacionin kryesor të API-t në shqip
+    """
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "docs", "api_documentation.html")
+    return FileResponse(docs_path, media_type="text/html")
+
+@router.get("/dokumentimi/shembuj", tags=["documentation"])
+def get_code_examples():
+    """
+    Shërben shembuj të detajuar kodi
+    """
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "docs", "code_examples.html")
+    return FileResponse(docs_path, media_type="text/html")
+
+@router.get("/dokumentimi/troubleshooting", tags=["documentation"])
+def get_troubleshooting_guide():
+    """
+    Shërben guidin e troubleshooting
+    """
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "docs", "troubleshooting.html")
+    return FileResponse(docs_path, media_type="text/html")
 
 @router.get("/songs/{song_id}/liked", tags=["songs"])
 def check_song_liked(song_id: str, user_id: str):

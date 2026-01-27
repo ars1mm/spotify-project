@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentacioni i API-t - Spotify Project</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1db954; border-bottom: 3px solid #1db954; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; }
+        h3 { color: #666; }
+        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #1db954; border-radius: 4px; }
+        .method { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; margin-right: 10px; }
+        .get { background: #28a745; }
+        .post { background: #007bff; }
+        .put { background: #ffc107; color: #333; }
+        .delete { background: #dc3545; }
+        code { background: #e9ecef; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .nav { background: #1db954; padding: 15px; margin: -30px -30px 30px -30px; border-radius: 8px 8px 0 0; }
+        .nav a { color: white; text-decoration: none; margin-right: 20px; font-weight: bold; }
+        .nav a:hover { text-decoration: underline; }
+        .service-section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .param { background: #fff3cd; padding: 8px; margin: 5px 0; border-radius: 4px; }
+        .response { background: #d1ecf1; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="#overview">Përmbledhje</a>
+            <a href="code_examples.html">Shembuj Kodi</a>
+            <a href="troubleshooting.html">Troubleshooting</a>
+            <a href="#supabase">Supabase</a>
+            <a href="#auth">Autentifikimi</a>
+            <a href="#songs">Këngët</a>
+            <a href="#playlists">Playlist-at</a>
+            <a href="#architecture">Arkitektura</a>
+        </div>
+
+        <h1>Dokumentacioni i API-t - Spotify Project</h1>
+
+        <section id="overview">
+            <h2>Përmbledhje e Përgjithshme</h2>
+            <p>Ky API ofron funksionalitete për një aplikacion të ngjashëm me Spotify, duke përfshirë menaxhimin e këngëve, playlist-ave, autentifikimin e përdoruesve dhe më shumë.</p>
+            
+            <h3>URL Bazë</h3>
+            <code>http://127.0.0.1:8000/api/v1</code>
+            
+            <h3>Formati i Përgjigjeve</h3>
+            <p>Të gjitha përgjigjet janë në format JSON. Përgjigjet e suksesshme kthejnë status code 200, ndërsa gabimet kthejnë status codes të përshtatshme me mesazhe detaje.</p>
+        </section>
+
+        <section id="auth" class="service-section">
+            <h2>Shërbimi i Autentifikimit</h2>
+            <p><strong>Skedari:</strong> <code>app/services/auth/auth_service.py</code></p>
+            <p>Menaxhon regjistrimin, hyrjen dhe rivendosjen e fjalëkalimeve të përdoruesve përmes Supabase Auth.</p>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/auth/signup</strong>
+                <p>Krijon një llogari të re përdoruesi.</p>
+                <div class="param"><strong>Body:</strong> <code>{"email": "string", "password": "string", "name": "string"}</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"user": {...}, "session": {...}}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/auth/login</strong>
+                <p>Hyn në sistem me email dhe fjalëkalim.</p>
+                <div class="param"><strong>Body:</strong> <code>{"email": "string", "password": "string"}</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"access_token": "string", "user": {...}}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/auth/reset-password</strong>
+                <p>Dërgon email për rivendosjen e fjalëkalimit.</p>
+                <div class="param"><strong>Body:</strong> <code>{"email": "string"}</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"message": "Password reset email sent"}</code></div>
+            </div>
+        </section>
+
+        <section id="songs" class="service-section">
+            <h2>Shërbimi i Këngëve</h2>
+            <p><strong>Skedari:</strong> <code>app/services/music/song_service.py</code></p>
+            <p>Menaxhon operacionet CRUD për këngët, duke përfshirë listimin, kërkimin dhe marrjen e URL-ve audio.</p>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/songs</strong>
+                <p>Merr listën e të gjitha këngëve me paginacion.</p>
+                <div class="param"><strong>Query:</strong> <code>page=1, limit=50</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"songs": [...], "total": number, "page": number}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/search</strong>
+                <p>Kërkon këngë bazuar në titull ose artist.</p>
+                <div class="param"><strong>Query:</strong> <code>q=string, limit=10</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"songs": [...]}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/songs/liked</strong>
+                <p>Merr këngët e pëlqyera të një përdoruesi.</p>
+                <div class="param"><strong>Query:</strong> <code>user_id=string</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"songs": [...]}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/songs/{song_id}/like</strong>
+                <p>Pëlqen një këngë.</p>
+                <div class="param"><strong>Query:</strong> <code>user_id=string</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "message": "Song liked"}</code></div>
+            </div>
+        </section>
+
+        <section id="playlists" class="service-section">
+            <h2>Shërbimi i Playlist-ave</h2>
+            <p><strong>Skedari:</strong> <code>app/services/music/playlist_service.py</code></p>
+            <p>Menaxhon krijimin, përditësimin, fshirjen dhe menaxhimin e këngëve në playlist-a.</p>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/playlists</strong>
+                <p>Merr playlist-at e përdoruesit (private + public të tij) plus të gjitha playlist-at publike.</p>
+                <div class="param"><strong>Query:</strong> <code>user_id=string, public_only=boolean</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"playlists": [...]}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/playlists</strong>
+                <p>Krijon një playlist të re.</p>
+                <div class="param"><strong>Body:</strong> <code>{"name": "string", "description": "string", "is_public": boolean, "user_id": "string"}</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "playlist": {...}}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/playlists/{playlist_id}</strong>
+                <p>Merr detajet e një playlist-i specifik me këngët e tij.</p>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"playlist": {...}, "songs": [...]}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method put">PUT</span>
+                <strong>/playlists/{playlist_id}</strong>
+                <p>Përditëson të dhënat e një playlist-i.</p>
+                <div class="param"><strong>Body:</strong> <code>{"name": "string", "description": "string", "is_public": boolean}</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "playlist": {...}}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method delete">DELETE</span>
+                <strong>/playlists/{playlist_id}</strong>
+                <p>Fshin një playlist (vetëm pronari mund ta fshijë).</p>
+                <div class="param"><strong>Query:</strong> <code>user_id=string</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "message": "Playlist deleted"}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/playlists/{playlist_id}/songs/{song_id}</strong>
+                <p>Shton një këngë në playlist.</p>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "message": "Song added to playlist"}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method delete">DELETE</span>
+                <strong>/playlists/{playlist_id}/songs/{song_id}</strong>
+                <p>Heq një këngë nga playlist-i.</p>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"success": true, "message": "Song removed from playlist"}</code></div>
+            </div>
+        </section>
+
+        <section id="search" class="service-section">
+            <h2>Shërbimi i Spotify API</h2>
+            <p><strong>Skedari:</strong> <code>app/services/external/spotify_service.py</code></p>
+            <p>Integrohet me Spotify API për të marrë informacione rreth këngëve, artistëve dhe albumeve.</p>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/track/download</strong>
+                <p>Merr informacione për shkarkimin e një kënge nga Spotify.</p>
+                <div class="param"><strong>Query:</strong> <code>track=string</code> (emri i këngës)</div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"data": {"title": "string", "artist": "string", "download_url": "string"}}</code></div>
+            </div>
+        </section>
+
+        <section id="admin" class="service-section">
+            <h2>Shërbimi i Administrimit</h2>
+            <p><strong>Skedari:</strong> <code>app/services/admin/admin_service.py</code></p>
+            <p>Ofron funksionalitete administrative si ngarkimi i këngëve dhe menaxhimi i sistemit.</p>
+
+            <h3>Karakteristikat Kryesore:</h3>
+            <ul>
+                <li><strong>Ngarkimi i Këngëve:</strong> Ngarkon skedarë audio në Supabase Storage</li>
+                <li><strong>Menaxhimi i Metadatave:</strong> Ruan informacionet e këngëve në bazën e të dhënave</li>
+                <li><strong>Validimi:</strong> Kontrollon formatet e skedarëve dhe madhësinë</li>
+                <li><strong>Siguria:</strong> Përdor Service Role Key për operacione të privilegjuara</li>
+            </ul>
+        </section>
+
+        <section id="trending" class="service-section">
+            <h2>Shërbimi i Trending</h2>
+            <p><strong>Skedari:</strong> <code>app/services/music/trending_service.py</code></p>
+            <p>Menaxhon këngët dhe albumet në trend bazuar në statistikat e dëgjimit.</p>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/trending/songs</strong>
+                <p>Merr këngët më të popullarizuara.</p>
+                <div class="param"><strong>Query:</strong> <code>limit=10</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"songs": [...]}</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/trending/albums</strong>
+                <p>Merr albumet më të popullarizuara.</p>
+                <div class="param"><strong>Query:</strong> <code>limit=10</code></div>
+                <div class="response"><strong>Përgjigje:</strong> <code>{"albums": [...]}</code></div>
+            </div>
+        </section>
+
+        <section id="like-service" class="service-section">
+            <h2>Shërbimi i Pëlqimeve</h2>
+            <p><strong>Skedari:</strong> <code>app/services/music/like_service.py</code></p>
+            <p>Menaxhon pëlqimet e përdoruesve për këngët, duke ofruar funksionalitete për të pëlqyer/hequr pëlqimin dhe për të marrë listen e këngëve të pëlqyera.</p>
+
+            <h3>Funksionalitetet:</h3>
+            <ul>
+                <li><strong>like_song():</strong> Pëlqen një këngë (shton në tabelën 'likes')</li>
+                <li><strong>unlike_song():</strong> Heq pëlqimin e një kënge</li>
+                <li><strong>is_song_liked():</strong> Kontrollon nëse një këngë është e pëlqyer</li>
+                <li><strong>get_liked_songs():</strong> Merr të gjitha këngët e pëlqyera të një përdoruesi</li>
+            </ul>
+
+            <h3>Validimi dhe Siguria:</h3>
+            <div class="param">
+                - Kontrollon që user_id dhe song_id të mos jenë të zbrazura<br>
+                - Parandalon pëlqimet e dyfishta (unique constraint)<br>
+                - Përdor Service Role për operacionet e sigurta
+            </div>
+        </section>
+
+        <section id="rate-limiting" class="service-section">
+            <h2>Rate Limiting dhe Siguria</h2>
+            <p><strong>Skedari:</strong> <code>app/core/rate_limiter.py</code></p>
+            <p>Implementon kufizime për numrin e kërkesave për të parandaluar spam-in dhe sulmet.</p>
+
+            <h3>Konfigurimet:</h3>
+            <div class="endpoint">
+                <strong>/track/download:</strong> 60 kërkesa për 30 sekonda për IP<br>
+                <strong>Të gjitha endpoint-et e tjera:</strong> Kufizime të përgjithshme
+            </div>
+
+            <h3>Storage për Rate Limiting:</h3>
+            <div class="param">
+                <strong>Redis (në production):</strong> Përdor Redis për ruajtjen e counter-ave<br>
+                <strong>Memory (në development):</strong> Përdor memory storage për test
+            </div>
+        </section>
+
+        <section id="error-handling" class="service-section">
+            <h2>Trajtimi i Gabimeve</h2>
+            <p>Të gjithë shërbimet përdorin një sistem të unifikuar për trajtimin e gabimeve.</p>
+
+            <h3>Struktura e Përgjigjes së Gabimit:</h3>
+            <div class="response">
+                <code>{
+  "error": "Përshkrimi i gabimit",
+  "detail": "Detaje shtesë (opsionale)",
+  "status_code": 400/401/404/500
+}</code>
+            </div>
+
+            <h3>Llojet e Gabimeve:</h3>
+            <ul>
+                <li><strong>400 Bad Request:</strong> Të dhëna të pavlefshme në kërkesa</li>
+                <li><strong>401 Unauthorized:</strong> Probleme autentifikimi</li>
+                <li><strong>404 Not Found:</strong> Resursi nuk u gjet</li>
+                <li><strong>500 Internal Server Error:</strong> Gabime të brendshme serveri</li>
+            </ul>
+        </section>
+
+        <section id="logging" class="service-section">
+            <h2>Sistemi i Logimit</h2>
+            <p>Të gjithë shërbimet përdorin logging për të ndjekur veprimet dhe gabimet.</p>
+
+            <h3>Nivelet e Logimit:</h3>
+            <div class="param">
+                <strong>DEBUG:</strong> Informacione të detajuara për zhvillim<br>
+                <strong>INFO:</strong> Veprime të rënda (login, krijim playlist)<br>
+                <strong>WARNING:</strong> Situata të dyshimta por jo kritike<br>
+                <strong>ERROR:</strong> Gabime që ndërhyjnë në funksionalitet
+            </div>
+
+            <h3>Format i Log-eve:</h3>
+            <div class="response">
+                <code>2024-01-27 19:47:17 - service_name - LEVEL - [ACTION] Message</code>
+            </div>
+        </section>
+
+        <section id="supabase">
+            <h2>Shërbimi i Supabase</h2>
+            <p><strong>Skedari:</strong> <code>app/services/base/base_client.py</code></p>
+            <p>Klasa bazë që menaxhon të gjitha ndërveprimet me Supabase, duke përfshirë bazën e të dhënave PostgreSQL, autentifikimin dhe ruajtjen e skedarëve.</p>
+
+            <h3>BaseSupabaseClient</h3>
+            <div class="endpoint">
+                <strong>Karakteristikat Kryesore:</strong>
+                <ul>
+                    <li><strong>Lidhja me Bazën e të Dhënave:</strong> Përdor Supabase Python Client për operacionet CRUD</li>
+                    <li><strong>Autentifikimi:</strong> Mbështet si Anonymous Key ashtu edhe Service Role Key</li>
+                    <li><strong>Storage:</strong> Menaxhon ngarkimin dhe shkarkimin e skedarëve audio</li>
+                    <li><strong>Real-time:</strong> Mbështet subscription për ndryshime në kohë reale</li>
+                </ul>
+            </div>
+
+            <h3>Konfigurimi</h3>
+            <div class="param">
+                <strong>SUPABASE_URL:</strong> URL-ja e projektit Supabase<br>
+                <strong>SUPABASE_ANON_KEY:</strong> Çelësi publik për operacionet e klientit<br>
+                <strong>SUPABASE_SERVICE_ROLE_KEY:</strong> Çelësi admin për operacionet e privilegjuara
+            </div>
+
+            <h3>Tabelat e Bazës së të Dhënave</h3>
+            <div class="response">
+                <strong>songs:</strong> Ruan të dhënat e këngëve (title, artist, album, file_path, duration)<br>
+                <strong>playlists:</strong> Ruan playlist-at (name, description, is_public, user_id)<br>
+                <strong>playlist_songs:</strong> Lidhja shumë-me-shumë midis playlist-ave dhe këngëve<br>
+                <strong>likes:</strong> Ruan pëlqimet e përdoruesve për këngët<br>
+                <strong>users:</strong> Informacione shtesë për përdoruesit (emri, preferencat)
+            </div>
+
+            <h3>Storage Buckets</h3>
+            <div class="response">
+                <strong>songs:</strong> Ruan skedarët audio (.mp3, .wav, .flac)<br>
+                <strong>covers:</strong> Ruan imazhet e kopertinave të këngëve dhe albumeve
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>Arkitektura e Shërbimeve</h2>
+            
+            <h3>Modeli i Shërbimeve (Service Pattern)</h3>
+            <p>Çdo shërbim ndjek një strukturë të ngjashme:</p>
+            <ul>
+                <li><strong>BaseSupabaseClient:</strong> Klasa bazë që ofron lidhjen me Supabase</li>
+                <li><strong>Validimi i Input-it:</strong> Kontrollon parametrat e ardhur</li>
+                <li><strong>Logjimi:</strong> Regjistron veprimet dhe gabimet</li>
+                <li><strong>Trajtimi i Gabimeve:</strong> Kthen përgjigje të strukturuara për gabimet</li>
+            </ul>
+
+            <h3>Siguria</h3>
+            <ul>
+                <li><strong>Rate Limiting:</strong> Kufizon numrin e kërkesave për IP</li>
+                <li><strong>CORS:</strong> Konfiguruar për frontend-in</li>
+                <li><strong>Autentifikimi:</strong> Përdor Supabase Auth tokens</li>
+                <li><strong>Autorizimi:</strong> Kontrollon të drejtat e përdoruesve</li>
+            <h3>Deployment dhe Skalimi</h3>
+            <ul>
+                <li><strong>Docker:</strong> Aplikacioni mund të kontejnerizohet për deployment</li>
+                <li><strong>Environment Variables:</strong> Të gjitha konfigurimet përmes .env</li>
+                <li><strong>Health Checks:</strong> Endpoint-e për monitorimin e shëndetët</li>
+                <li><strong>Horizontal Scaling:</strong> Mbështet shumë instanca përmes load balancer</li>
+            </ul>
+
+            <h3>Performance dhe Optimizimi</h3>
+            <ul>
+                <li><strong>Database Indexing:</strong> Indekse të optimizuara për kërkim dhe filtrimin</li>
+                <li><strong>Caching:</strong> Redis për cache të kërkesave të shpeshta</li>
+                <li><strong>Pagination:</strong> Të gjitha listat përdorin paginacion</li>
+                <li><strong>Async Operations:</strong> FastAPI async për performance të lartë</li>
+            </ul>
+        </section>
+
+        <section id="examples" class="service-section">
+            <h2>Shembuj Përdorimi</h2>
+            
+            <h3>Krijimi i një Playlist-i</h3>
+            <div class="endpoint">
+                <strong>Kërkesa:</strong>
+                <pre><code>POST /api/v1/playlists
+Content-Type: application/json
+
+{
+  "name": "Playlist-i im i ri",
+  "description": "Këngë të pëlqyera",
+  "is_public": true,
+  "user_id": "user-uuid-here",
+  "song_ids": ["song1-uuid", "song2-uuid"]
+}</code></pre>
+            </div>
+            
+            <h3>Kërkimi i Këngëve</h3>
+            <div class="endpoint">
+                <strong>Kërkesa:</strong>
+                <pre><code>GET /api/v1/search?q=eminem&limit=5</code></pre>
+                <strong>Përgjigje:</strong>
+                <pre><code>{
+  "songs": [
+    {
+      "id": "song-uuid",
+      "title": "Lose Yourself",
+      "artist": "Eminem",
+      "album": "8 Mile Soundtrack",
+      "duration_seconds": 326,
+      "audio_url": "https://..."
+    }
+  ]
+}</code></pre>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
+        <section id="code-explanations" class="service-section">
+            <h2>Shpjegime Kodi</h2>
+            
+            <h3>BaseSupabaseClient - Klasa Bazë</h3>
+            <div class="endpoint">
+                <strong>Lokacioni:</strong> <code>app/services/base/base_client.py</code>
+                <pre><code>class BaseSupabaseClient:
+    def __init__(self, use_service_role=False):
+        if use_service_role:
+            self.supabase = create_client(url, service_role_key)
+        else:
+            self.supabase = create_client(url, anon_key)</code></pre>
+                <p><strong>Shpjegimi:</strong> Kjo klasë krijon lidhjen me Supabase. Parametri <code>use_service_role</code> përcakton nëse të përdoret çelësi admin (për operacione të privilegjuara) apo çelësi publik.</p>
+            </div>
+
+            <h3>Playlist Service - Krijimi i Playlist-it</h3>
+            <div class="endpoint">
+                <strong>Metoda:</strong> <code>create_playlist()</code>
+                <pre><code>def create_playlist(self, name, description, is_public, user_id, song_ids=None):
+    # Validimi i input-it
+    if not name or not name.strip():
+        raise ValueError("Playlist name cannot be empty")
+    
+    # Krijimi i playlist-it
+    playlist_data = {
+        "name": name.strip(),
+        "description": description.strip() if description else "",
+        "is_public": is_public,
+        "user_id": user_id.strip()
+    }
+    
+    # Shtimi në bazën e të dhënave
+    insert_response = self.supabase.table("playlists").insert(playlist_data).execute()</code></pre>
+                <p><strong>Shpjegimi:</strong> Metoda validizon të dhënat, pastron string-et me <code>strip()</code>, dhe përdor Supabase client për të shtuar playlist-in në bazën e të dhënave.</p>
+            </div>
+
+            <h3>Auth Service - Autentifikimi</h3>
+            <div class="endpoint">
+                <strong>Metoda:</strong> <code>login_user()</code>
+                <pre><code>def login_user(self, email, password):
+    try:
+        response = self.supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        return {
+            "access_token": response.session.access_token,
+            "user": response.user
+        }
+    except Exception as e:
+        return {"error": str(e)}</code></pre>
+                <p><strong>Shpjegimi:</strong> Përdor Supabase Auth për të verifikuar kredencialet. Kthen access token për përdorim në kërkesa të tjera.</p>
+            </div>
+
+            <h3>Rate Limiting - Kufizimi i Kërkesave</h3>
+            <div class="endpoint">
+                <strong>Implementimi:</strong>
+                <pre><code>from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@router.get("/track/download")
+@limiter.limit("60/30seconds")
+def download_track(request: Request, track: str):</code></pre>
+                <p><strong>Shpjegimi:</strong> SlowAPI përdoret për të kufizuar 60 kërkesa për 30 sekonda për IP. Parandalon spam dhe sulme.</p>
+            </div>
+        </section>
+
+        <section id="qna" class="service-section">
+            <h2>Pyetje dhe Përgjigje (Q&A)</h2>
+
+            <h3>Pyetje të Përgjithshme</h3>
+            
+            <div class="endpoint">
+                <strong>P: Pse përdoret Supabase në vend të një baze të dhënash tradicionale?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong> Supabase ofron:
+                    <ul>
+                        <li>Autentifikim të integruar (Auth)</li>
+                        <li>Storage për skedarë audio</li>
+                        <li>Real-time subscriptions</li>
+                        <li>API të gatshme REST dhe GraphQL</li>
+                        <li>Konfigurimi i shpejtë pa nevojë për setup kompleks</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si funksionon sistemi i autentifikimit?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong> Përdoret Supabase Auth që:
+                    <ol>
+                        <li>Merr email/password nga përdoruesi</li>
+                        <li>Verifikohet nga Supabase Auth</li>
+                        <li>Kthehet një JWT access token</li>
+                        <li>Token-i përdoret në header-at e kërkesave të tjera</li>
+                        <li>Backend-i verifikon token-in për çdo kërkesë të mbrojtur</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Pse ka dy lloje çelësash Supabase (anon_key dhe service_role_key)?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ul>
+                        <li><strong>anon_key:</strong> Për operacionet e klientit, ka kufizime sigurie (RLS - Row Level Security)</li>
+                        <li><strong>service_role_key:</strong> Për operacionet admin, ka qasje të plotë në bazën e të dhënave</li>
+                        <li>Kjo ndarja siguron që përdoruesit nuk mund të aksesojnë të dhëna të ndaluara</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Pyetje Teknike</h3>
+
+            <div class="endpoint">
+                <strong>P: Si implementohet paginacioni në API?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong> Përdoren parametrat <code>page</code> dhe <code>limit</code>:
+                    <pre><code># Llogaritja e offset-it
+offset = (page - 1) * limit
+
+# Query me limit dhe offset
+query = supabase.table("songs").select("*").range(offset, offset + limit - 1)</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si trajtohen gabimet në mënyrë konsistente?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong> Të gjitha shërbimet përdorin try-catch dhe kthejnë:
+                    <pre><code>try:
+    # Operacioni
+    return {"success": True, "data": result}
+except ValueError as ve:
+    logger.error(f"Validation error: {str(ve)}")
+    raise ve  # FastAPI e konverton në HTTP 400
+except Exception as e:
+    logger.error(f"Unexpected error: {str(e)}")
+    return {"error": str(e)}</code></pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si funksionon storage-i për skedarët audio?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong> Supabase Storage përdoret për:
+                    <ol>
+                        <li>Ngarkimi i skedarëve në bucket "songs"</li>
+                        <li>Ruajtja e path-it në bazën e të dhënave</li>
+                        <li>Gjenerimi i URL-ve të nënshkruara për qasje</li>
+                        <li>Kontrolli i qasjes përmes RLS policies</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3>Pyetje Zhvillimi</h3>
+
+            <div class="endpoint">
+                <strong>P: Si të shtohet një endpoint i ri?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ol>
+                        <li>Shto metodën në shërbimin përkatës (p.sh. <code>song_service.py</code>)</li>
+                        <li>Shto route-in në <code>app/api/routes.py</code></li>
+                        <li>Përcakto Pydantic model për request/response</li>
+                        <li>Shto validimin dhe error handling</li>
+                        <li>Testo endpoint-in</li>
+                        <li>Përditëso dokumentacionin</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si të konfigurojë environment-i për zhvillim?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ol>
+                        <li>Kopjo <code>.env.example</code> në <code>.env</code></li>
+                        <li>Plotëso të gjitha variablat e nevojshme</li>
+                        <li>Instalo dependencies: <code>pip install -r requirements.txt</code></li>
+                        <li>Nise serverin: <code>uvicorn main:app --reload</code></li>
+                        <li>Testo në <code>http://127.0.0.1:8000/docs</code></li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si të debugohet një problem në API?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ol>
+                        <li>Kontrollo log-et në console</li>
+                        <li>Përdor <code>DEBUG=True</code> në <code>.env</code></li>
+                        <li>Testo endpoint-in në <code>/docs</code> (Swagger UI)</li>
+                        <li>Kontrollo Supabase dashboard për gabime në bazën e të dhënave</li>
+                        <li>Përdor <code>logger.debug()</code> për informacione shtesë</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3>Pyetje Sigurie</h3>
+
+            <div class="endpoint">
+                <strong>P: Si mbrohet API-ja nga sulmet?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ul>
+                        <li><strong>Rate Limiting:</strong> Kufizon kërkesa për IP</li>
+                        <li><strong>CORS:</strong> Kontrollon domain-et e lejuara</li>
+                        <li><strong>Input Validation:</strong> Pydantic models validojnë të dhënat</li>
+                        <li><strong>SQL Injection:</strong> Supabase ORM parandalon injection</li>
+                        <li><strong>Authentication:</strong> JWT tokens për qasje</li>
+                        <li><strong>Authorization:</strong> Kontrollon të drejtat e përdoruesve</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>P: Si ruhen të dhënat sensitive?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ul>
+                        <li>Të gjitha çelësat në <code>.env</code> file</li>
+                        <li><code>.env</code> është në <code>.gitignore</code></li>
+                        <li>Service role key përdoret vetëm në backend</li>
+                        <li>Fjalëkalimet hash-ohen nga Supabase Auth</li>
+                        <li>HTTPS në production</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Pyetje Performance</h3>
+
+            <div class="endpoint">
+                <strong>P: Si optimizohet performance-i i API-së?</strong>
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+                    <ul>
+                        <li><strong>Async/Await:</strong> FastAPI përdor async për operacione jo-blokuese</li>
+                        <li><strong>Database Indexing:</strong> Indekse në kolonat e kërkuara shpesh</li>
+                        <li><strong>Pagination:</strong> Ndan rezultatet në faqe</li>
+                        <li><strong>Caching:</strong> Redis për të dhëna të përdorura shpesh</li>
+                        <li><strong>Connection Pooling:</strong> Supabase menaxhon pool-in e lidhjeve</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="troubleshooting" class="service-section">
+            <h2>Zgjidhja e Problemeve</h2>
+
+            <h3>Probleme të Shpeshta</h3>
+
+            <div class="endpoint">
+                <strong>Problem:</strong> "Supabase connection failed"
+                <div class="response">
+                    <strong>Zgjidhja:</strong>
+                    <ol>
+                        <li>Kontrollo <code>SUPABASE_URL</code> dhe <code>SUPABASE_ANON_KEY</code> në <code>.env</code></li>
+                        <li>Verifiko që projekti Supabase është aktiv</li>
+                        <li>Kontrollo internet connection</li>
+                        <li>Testo me <code>curl</code> direkt në Supabase API</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>Problem:</strong> "Rate limit exceeded"
+                <div class="response">
+                    <strong>Zgjidhja:</strong>
+                    <ol>
+                        <li>Prit disa sekonda dhe provo përsëri</li>
+                        <li>Kontrollo nëse po bën shumë kërkesa shpejt</li>
+                        <li>Në development, mund të çaktivizosh rate limiting</li>
+                        <li>Përdor Redis për rate limiting në production</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <strong>Problem:</strong> "File not found" për audio files
+                <div class="response">
+                    <strong>Zgjidhja:</strong>
+                    <ol>
+                        <li>Kontrollo që skedari ekziston në Supabase Storage</li>
+                        <li>Verifiko <code>SUPABASE_BUCKET_NAME</code> në <code>.env</code></li>
+                        <li>Kontrollo permissions në bucket</li>
+                        <li>Gjeneroj URL të re nëse ka skaduar</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

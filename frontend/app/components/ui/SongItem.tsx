@@ -1,9 +1,10 @@
-import { Box, Text, Flex } from '@chakra-ui/react';
+import { Box, Text } from '@chakra-ui/react';
 import { Song } from '../../types';
 import { formatDuration } from '../../utils';
-import { CoverImage } from '../ui/CoverImage';
-import { SecondaryButton } from '../ui/Buttons';
+import { LazyImage } from './LazyImage';
+import { SecondaryButton } from './Buttons';
 import { APP_CONSTANTS } from '../../constants';
+import { memo } from 'react';
 
 interface SongItemProps {
   song: Song;
@@ -13,7 +14,7 @@ interface SongItemProps {
   onRemove?: (songId: string) => void;
 }
 
-export function SongItem({ song, index, showRemove, onClick, onRemove }: SongItemProps) {
+export const SongItem = memo(({ song, index, showRemove, onClick, onRemove }: SongItemProps) => {
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Remove this song from playlist?')) {
@@ -40,7 +41,7 @@ export function SongItem({ song, index, showRemove, onClick, onRemove }: SongIte
       )}
       
       <Box mr={3}>
-        <CoverImage
+        <LazyImage
           src={song.cover_image_url}
           alt={song.title}
           size="sm"
@@ -106,4 +107,6 @@ export function SongItem({ song, index, showRemove, onClick, onRemove }: SongIte
       )}
     </Box>
   );
-}
+});
+
+SongItem.displayName = 'SongItem';

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shembuj Kodi - Spotify Project</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1db954; border-bottom: 3px solid #1db954; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; }
+        h3 { color: #666; }
+        .code-block { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #1db954; border-radius: 4px; overflow-x: auto; }
+        .nav { background: #1db954; padding: 15px; margin: -30px -30px 30px -30px; border-radius: 8px 8px 0 0; }
+        .nav a { color: white; text-decoration: none; margin-right: 20px; font-weight: bold; }
+        .nav a:hover { text-decoration: underline; }
+        .function-section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .param { background: #fff3cd; padding: 8px; margin: 5px 0; border-radius: 4px; }
+        .response { background: #d1ecf1; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        pre { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .step { background: #e8f5e8; padding: 10px; margin: 5px 0; border-left: 3px solid #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="api_documentation.html">Kryesore</a>
+            <a href="#playlist-functions">Playlist Functions</a>
+            <a href="#auth-functions">Auth Functions</a>
+            <a href="#admin-functions">Admin Functions</a>
+            <a href="#supabase-functions">Supabase Functions</a>
+        </div>
+
+        <h1>Shembuj të Detajuar Kodi</h1>
+
+        <section id="playlist-functions" class="function-section">
+            <h2>Playlist Service Functions</h2>
+
+            <h3>create_playlist() - Si Funksionon</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Si krijohet një playlist i ri dhe çfarë ndodh hap pas hapi?
+                <div class="response">
+                    <strong>Përgjigje:</strong> Ja procesi i plotë:
+                    
+                    <div class="step">
+                        <strong>Hapi 1: Validimi i Input-it</strong>
+                        <pre><code>if not name or not name.strip():
+    raise ValueError("Playlist name cannot be empty")
+if not user_id or not user_id.strip():
+    raise ValueError("User ID cannot be empty")</code></pre>
+                        <p>Kontrollon që emri dhe user_id të mos jenë të zbrazura.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 2: Pastrimi i të Dhënave</strong>
+                        <pre><code>playlist_data = {
+    "name": name.strip(),  # Heq hapësirat e tepërta
+    "description": description.strip() if description else "",
+    "is_public": is_public,
+    "user_id": user_id.strip()
+}</code></pre>
+                        <p>Pastron string-et dhe përgatit të dhënat për bazën e të dhënave.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 3: Shtimi në Bazën e të Dhënave</strong>
+                        <pre><code>insert_response = (
+    self.supabase.table("playlists")
+    .insert(playlist_data)
+    .execute()
+)</code></pre>
+                        <p>Përdor Supabase client për të shtuar playlist-in.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 4: Shtimi i Këngëve (Opsionale)</strong>
+                        <pre><code>if song_ids and len(song_ids) > 0:
+    for idx, song_id in enumerate(song_ids):
+        song_insert = (
+            self.supabase.table("playlist_songs")
+            .insert({
+                "playlist_id": playlist_id,
+                "song_id": song_id.strip(),
+                "position": idx  # Pozicioni në playlist
+            })
+            .execute()
+        )</code></pre>
+                        <p>Nëse ka këngë të specifikuara, i shton në playlist me pozicionin e tyre.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>get_playlists() - Logjika e Filtrimit</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Pse get_playlists() kthen playlist-a të ndryshme bazuar në parametra?
+                <div class="response">
+                    <strong>Përgjigje:</strong> Funksioni ka tre mënyra pune:
+
+                    <div class="step">
+                        <strong>Rasti 1: public_only=True</strong>
+                        <pre><code>if public_only:
+    query = query.eq("is_public", True)</code></pre>
+                        <p>Kthen vetëm playlist-at publike të të gjithëve.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Rasti 2: user_id i specifikuar</strong>
+                        <pre><code># Merr playlist-at e përdoruesit (publike + private)
+user_playlists = supabase.table("playlists")
+    .select("*")
+    .eq("user_id", user_id.strip())
+    .execute()
+
+# Merr playlist-at publike të të tjerëve
+public_playlists = supabase.table("playlists")
+    .select("*")
+    .eq("is_public", True)
+    .neq("user_id", user_id.strip())  # Përjashton të tijat
+    .execute()
+
+# I kombinon
+all_playlists = user_playlists.data + public_playlists.data</code></pre>
+                        <p>Kthen playlist-at e përdoruesit + të gjitha playlist-at publike.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Rasti 3: Pa parametra</strong>
+                        <pre><code>query = self.supabase.table("playlists").select("*")
+response = query.execute()</code></pre>
+                        <p>Kthen të gjitha playlist-at (për admin).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="auth-functions" class="function-section">
+            <h2>Auth Service Functions</h2>
+
+            <h3>create_user() - Procesi i Regjistrimit</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Si funksionon regjistrimi i përdoruesit dhe çfarë ndodh me të dhënat?
+                <div class="response">
+                    <strong>Përgjigje:</strong> Procesi përfshin disa hapa:
+
+                    <div class="step">
+                        <strong>Hapi 1: Validimi</strong>
+                        <pre><code>if not email or '@' not in email:
+    raise ValueError("Valid email is required")
+if not password or len(password) < 6:
+    raise ValueError("Password must be at least 6 characters")</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 2: Krijimi në Supabase Auth</strong>
+                        <pre><code>response = self.supabase.auth.sign_up({
+    "email": email,
+    "password": password,
+    "options": {
+        "data": {
+            "name": name  # Metadata shtesë
+        }
+    }
+})</code></pre>
+                        <p>Supabase krijon përdoruesin dhe dërgon email verifikimi.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 3: Ruajtja në Tabelën 'users'</strong>
+                        <pre><code>if response.user:
+    user_data = {
+        "id": response.user.id,  # UUID nga Supabase Auth
+        "email": email,
+        "name": name,
+        "created_at": "now()"
+    }
+    self.supabase.table("users").insert(user_data).execute()</code></pre>
+                        <p>Ruan informacione shtesë në tabelën tonë.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>login_user() - Verifikimi i Kredencialeve</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Si verifikon API-ja kredencialet dhe çfarë kthen?
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+
+                    <div class="step">
+                        <strong>Verifikimi në Supabase</strong>
+                        <pre><code>response = self.supabase.auth.sign_in_with_password({
+    "email": email,
+    "password": password
+})</code></pre>
+                        <p>Supabase kontrollon email/password dhe kthen session.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Përgatitja e Përgjigjës</strong>
+                        <pre><code>return {
+    "access_token": response.session.access_token,  # JWT token
+    "refresh_token": response.session.refresh_token,
+    "user": {
+        "id": response.user.id,
+        "email": response.user.email,
+        "name": response.user.user_metadata.get("name")
+    }
+}</code></pre>
+                        <p>Kthen token-in për përdorim në kërkesa të tjera.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="admin-functions" class="function-section">
+            <h2>Admin Service Functions</h2>
+
+            <h3>bulk_insert_songs() - Ngarkimi Masiv</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Si funksionon ngarkimi masiv i këngëve dhe pse është kompleks?
+                <div class="response">
+                    <strong>Përgjigje:</strong> Është kompleks sepse duhet të menaxhojë artistë dhe albume:
+
+                    <div class="step">
+                        <strong>Hapi 1: Validimi i të Dhënave</strong>
+                        <pre><code>for song in songs_data:
+    if not song.get('title') or not song.get('title').strip():
+        logger.warning(f"Skipping song with missing title: {song}")
+        continue
+    
+    artist_name = song.get('artist_name') or song.get('artist')
+    if not artist_name:
+        logger.warning(f"Skipping song with missing artist")
+        continue</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 2: Krijimi/Gjetja e Artistit</strong>
+                        <pre><code># Kontrollon nëse artisti ekziston
+existing_artist = supabase.table('artists')
+    .select('*')
+    .eq('name', artist_name.strip())
+    .execute()
+
+if not existing_artist.data:
+    # Krijon artist të ri
+    new_artist = supabase.table('artists')
+        .insert({"name": artist_name.strip()})
+        .execute()
+    artist_id = new_artist.data[0]['id']
+else:
+    artist_id = existing_artist.data[0]['id']</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 3: Menaxhimi i Albumit</strong>
+                        <pre><code>album_name = song.get('album_name') or song.get('album')
+if album_name:
+    # E njëjta logjikë si për artistin
+    album_result = self.create_album(album_name, artist_id)
+    album_id = album_result['data']['id']</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 4: Shtimi i Këngës</strong>
+                        <pre><code>song_data = {
+    "title": song['title'].strip(),
+    "artist_id": artist_id,
+    "album_id": album_id if album_name else None,
+    "duration_seconds": song.get('duration_seconds'),
+    "file_path": song.get('file_path')
+}
+processed_songs.append(song_data)</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Hapi 5: Bulk Insert</strong>
+                        <pre><code># Shton të gjitha këngët në një operacion
+result = supabase.table('songs')
+    .insert(processed_songs)
+    .execute()</code></pre>
+                        <p>Më efikas se sa të shtosh një nga një.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="supabase-functions" class="function-section">
+            <h2>Supabase Integration Functions</h2>
+
+            <h3>BaseSupabaseClient.__init__() - Inicializimi</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Pse ka dy mënyra inicializimi dhe kur përdoret secila?
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+
+                    <div class="step">
+                        <strong>Anonymous Key (Default)</strong>
+                        <pre><code>if not use_service_role:
+    self.supabase = create_client(
+        supabase_url=settings.SUPABASE_URL,
+        supabase_key=settings.SUPABASE_ANON_KEY
+    )</code></pre>
+                        <p><strong>Përdoret për:</strong> Operacionet e klientit, ka Row Level Security (RLS)</p>
+                        <p><strong>Kufizimet:</strong> Mund të aksesojë vetëm të dhënat e lejuara nga RLS policies</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Service Role Key (Admin)</strong>
+                        <pre><code>if use_service_role:
+    self.supabase = create_client(
+        supabase_url=settings.SUPABASE_URL,
+        supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
+    )</code></pre>
+                        <p><strong>Përdoret për:</strong> Operacionet admin, bypass RLS</p>
+                        <p><strong>Fuqia:</strong> Qasje e plotë në të gjitha të dhënat</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Shembull Përdorimi</strong>
+                        <pre><code># Për operacione të zakonshme
+song_service = SongService()  # use_service_role=False
+
+# Për operacione admin
+admin_service = SongService(use_service_role=True)</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <h3>_get_audio_url() - Gjenerimi i URL-ve</h3>
+            <div class="code-block">
+                <strong>Pyetja:</strong> Si gjenerohen URL-të për skedarët audio dhe pse janë të përkohshme?
+                <div class="response">
+                    <strong>Përgjigje:</strong>
+
+                    <div class="step">
+                        <strong>Gjenerimi i URL-së</strong>
+                        <pre><code>def _get_audio_url(self, file_path: str) -> str:
+    if not file_path:
+        return None
+    
+    try:
+        # Gjeneron URL të nënshkruar që skadon pas 1 ore
+        signed_url = self.supabase.storage
+            .from_(settings.SUPABASE_BUCKET_NAME)
+            .create_signed_url(file_path, expires_in=3600)
+        
+        return signed_url['signedURL']
+    except Exception as e:
+        logger.error(f"Failed to generate audio URL: {str(e)}")
+        return None</code></pre>
+                    </div>
+
+                    <div class="step">
+                        <strong>Pse URL të Nënshkruara?</strong>
+                        <ul>
+                            <li><strong>Siguria:</strong> Vetëm përdoruesit e autorizuar mund t'i aksesojnë</li>
+                            <li><strong>Kontrolli i Qasjes:</strong> URL-të skadojnë pas një kohe të caktuar</li>
+                            <li><strong>Bandwidth:</strong> Parandalon download-in e pakufizuar</li>
+                            <li><strong>Analytics:</strong> Mund të ndiqen akseset</li>
+                        </ul>
+                    </div>
+
+                    <div class="step">
+                        <strong>Refresh i URL-ve</strong>
+                        <pre><code># Frontend-i duhet të rigjenerojë URL-të kur skadojnë
+if (current_time - url_generated_time) > 3000:  # 50 minuta
+    new_url = await fetch(`/api/v1/songs/${song_id}/refresh-url`)
+    audio_element.src = new_url</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
