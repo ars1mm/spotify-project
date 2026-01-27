@@ -10,6 +10,7 @@ import { AuthButtons } from '../../components/auth/AuthButtons'
 import { UserProfile } from '../../components/user/UserProfile'
 import { authStorage } from '../../lib/auth'
 import { apiRequest } from '../../config/api'
+import Image from 'next/image'
 
 interface Song {
   id: string
@@ -208,7 +209,7 @@ export default function CreatePlaylistPage() {
                             flexShrink={0}
                           >
                             {song.cover_image_url ? (
-                              <img
+                              <Image
                                 src={song.cover_image_url}
                                 alt={song.title}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}

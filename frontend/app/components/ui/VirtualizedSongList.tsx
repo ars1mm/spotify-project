@@ -77,6 +77,7 @@ export const VirtualizedSongList = memo(({
       rowCount={songs.length}
       rowHeight={ITEM_HEIGHT}
       rowComponent={SongRow}
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - react-window type complexity workaround
       rowProps={rowData}
       overscanCount={5}

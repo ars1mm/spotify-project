@@ -41,7 +41,7 @@ export function usePlaylistPage() {
       await playlistApi.update(params.id as string, { name, description, is_public: isPublic });
       toast.success('Playlist updated');
       loadPlaylist(params.id as string);
-    } catch (error) {
+    } catch {
       toast.error('Failed to update playlist');
     }
   };
@@ -51,7 +51,7 @@ export function usePlaylistPage() {
       await playlistApi.addSong(params.id as string, songId);
       toast.success('Song added');
       loadPlaylist(params.id as string);
-    } catch (error) {
+    } catch {
       toast.error('Failed to add song');
     }
   };
@@ -61,7 +61,7 @@ export function usePlaylistPage() {
       await playlistApi.removeSong(params.id as string, songId);
       toast.success('Song removed');
       loadPlaylist(params.id as string);
-    } catch (error) {
+    } catch {
       toast.error('Failed to remove song');
     }
   };
@@ -70,7 +70,7 @@ export function usePlaylistPage() {
     try {
       await playlistApi.delete(params.id as string, userId);
       return true;
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete playlist');
       return false;
     }
