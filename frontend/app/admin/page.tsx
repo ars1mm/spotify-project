@@ -27,7 +27,7 @@
  * 3. Importoni dhe shfaqni komponentin kryesor
  */
 
-import AdminDashboard from '@/app/components/admin/AdminDashboard'
+import AdminDashboard from '../components/admin/AdminDashboard'
 
 export const metadata = {
   title: 'Admin Dashboard - Spotify Project',

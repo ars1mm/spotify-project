@@ -1,18 +1,12 @@
 'use client';
 
-import { Box, VStack, Text } from '@chakra-ui/react';
-import { useState, useEffect } from 'react';
-import { NavItem } from './NavItem';
+import { Box, VStack } from '@chakra-ui/react';
 import { useSearch } from '../../contexts/SearchContext';
-import { FiHome, FiSearch, FiMusic, FiPlus, FiHeart, FiList } from 'react-icons/fi';
-import { apiRequest } from '../../config/api';
-import { authStorage } from '../../lib/auth';
-
-interface Playlist {
-  id: string
-  name: string
-  is_public: boolean
-}
+import { usePlaylists } from '../../hooks/usePlaylists';
+import { SidebarHeader } from './SidebarHeader';
+import { MainNavigation } from './MainNavigation';
+import { QuickActions } from './QuickActions';
+import { PlaylistsList } from './PlaylistsList';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -21,39 +15,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { toggleSearch } = useSearch();
-  const [playlists, setPlaylists] = useState<Playlist[]>([])
-  const [loading,setLoading] = useState(false)
-
-  useEffect(() => {
-    loadPlaylists()
-    
-    // Listen for playlist changes
-    const handlePlaylistsChanged = () => {
-      loadPlaylists()
-    }
-    
-    window.addEventListener('playlistsChanged', handlePlaylistsChanged)
-    
-    return () => {
-      window.removeEventListener('playlistsChanged', handlePlaylistsChanged)
-    }
-  }, [])
-
-  const loadPlaylists = async () => {
-    const session = authStorage.getSession()
-    if (!session?.user?.id) return
-
-    setLoading(true)
-    try {
-      // Get all playlists for the user (includes both public and private)
-      const response = await apiRequest(`/api/v1/playlists?user_id=${session.user.id}`)
-      setPlaylists(response.playlists || [])
-    } catch (error) {
-      console.error('Failed to load playlists:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { playlists } = usePlaylists();
 
   const handleNavClick = (callback?: () => void) => {
     callback?.();
@@ -77,36 +39,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       overflowY="auto"
     >
       <VStack align="start" gap={6}>
-        <Text fontSize="2xl" fontWeight="bold" color="white">
-          Spotify
-        </Text>
-        
-        <VStack align="start" gap={4} w="full">
-          <NavItem icon={FiHome} label="Home" href="/" />
-          <NavItem icon={FiSearch} label="Search" onClick={() => handleNavClick(toggleSearch)} />
-          <NavItem icon={FiMusic} label="Your Library" href="/library" />
-        </VStack>
-
-        <VStack align="start" gap={4} w="full" mt={8}>
-          <NavItem icon={FiPlus} label="Create Playlist" href="/playlist/create" />
-          <NavItem icon={FiHeart} label="Liked Songs" href="/library?tab=liked" />
-        </VStack>
-
-        {playlists.length > 0 && (
-          <VStack align="start" gap={2} w="full" mt={4}>
-            <Text fontSize="xs" fontWeight="bold" color="#a7a7a7" textTransform="uppercase" mb={2}>
-              Playlists
-            </Text>
-            {playlists.map((playlist) => (
-              <NavItem 
-                key={playlist.id}
-                icon={FiList} 
-                label={playlist.name} 
-                href={`/playlist/${playlist.id}`}
-              />
-            ))}
-          </VStack>
-        )}
+        <SidebarHeader />
+        <MainNavigation onNavClick={handleNavClick} onSearchToggle={toggleSearch} />
+        <QuickActions />
+        <PlaylistsList playlists={playlists} />
       </VStack>
     </Box>
   );

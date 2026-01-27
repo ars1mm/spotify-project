@@ -33,7 +33,7 @@ import {
   Button,
   Flex,
 } from '@chakra-ui/react'
-import { Song, GENRES } from '@/app/types/admin'
+import { Song, GENRES } from '../../types/admin'
 
 interface SongUploaderProps {
   adminToken: string
@@ -75,23 +75,31 @@ export default function SongUploader({
       : 'http://127.0.0.1:8000')
 
   useEffect(() => {
-    fetchArtists()
-  }, [adminToken])
-
-  const fetchArtists = async () => {
-    if (!adminToken) return
-    try {
-      const response = await fetch(`${API_URL}/api/v1/admin/artists`, {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setArtists(data.artists || [])
+    let isMounted = true
+    
+    const loadArtists = async () => {
+      if (!adminToken) return
+      try {
+        const response = await fetch(`${API_URL}/api/v1/admin/artists`, {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        })
+        if (response.ok && isMounted) {
+          const data = await response.json()
+          setArtists(data.artists || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch artists:', error)
       }
-    } catch (error) {
-      console.error('Failed to fetch artists:', error)
     }
-  }
+
+    if (adminToken) {
+      loadArtists()
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [adminToken, API_URL])
 
   const toBase64 = (str: string): string => {
     return Buffer.from(str).toString('base64')
