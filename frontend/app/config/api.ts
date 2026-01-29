@@ -24,7 +24,7 @@ export async function apiRequest(endpoint: string, options?: RequestInit) {
         if (session?.access_token) {
           authHeader = { 'Authorization': `Bearer ${session.access_token}` };
         }
-      } catch (e) {
+      } catch {
         console.error('Failed to parse session for auth header');
       }
     }

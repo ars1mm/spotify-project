@@ -118,7 +118,7 @@ export default function AdminDashboard() {
         const error = await response.json()
         setLoginError(error.detail || 'Invalid admin key')
       }
-    } catch (err) {
+    } catch {
       setLoginError(`Failed to connect to server at ${API_URL}`)
     } finally {
       setLoginLoading(false)

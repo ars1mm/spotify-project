@@ -1,5 +1,3 @@
-import { APP_CONSTANTS } from '../constants';
-
 export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -30,7 +28,7 @@ export const getStorageItem = <T>(key: string, defaultValue: T): T => {
   }
 };
 
-export const setStorageItem = (key: string, value: any): void => {
+export const setStorageItem = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {

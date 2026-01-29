@@ -1,5 +1,5 @@
 import { Box, VStack, Text, Spinner, Button } from '@chakra-ui/react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useSongs } from '../hooks/useSongs';
 import { VirtualizedSongList } from '../components/ui/VirtualizedSongList';
 import { usePlayer } from '../contexts/PlayerContext';

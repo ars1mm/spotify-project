@@ -16,7 +16,7 @@ router = APIRouter(
 def get_admin_service() -> AdminService:
     return AdminService()
 
-
+# Nuk eshte implementuar ne service
 @router.get("/song/{song_id}")
 async def get_song_analytics(
     song_id: str,
@@ -25,7 +25,7 @@ async def get_song_analytics(
     """Get song analytics"""
     return admin_service.get_song_analytics(song_id)
 
-
+# Nuk eshte implementuar ne service
 @router.get("/top-songs")
 async def get_top_songs(
     limit: int = 50,

@@ -35,10 +35,10 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.include_router(router, prefix="/api/v1")
-app.include_router(admin_public_router, prefix="/api/v1")  # Public admin routes (login)
-app.include_router(admin_router, prefix="/api/v1")  # Protected admin routes
-app.include_router(codebase_router, prefix="/api/v1")  # Codebase explorer routes
+app.include_router(router, prefix=settings.main_api_prefix)
+app.include_router(admin_public_router, prefix=settings.admin_api_prefix)  # Public admin routes (login)
+app.include_router(admin_router, prefix=settings.admin_api_prefix)  # Protected admin routes
+app.include_router(codebase_router, prefix=settings.codebase_api_prefix)  # Codebase explorer routes
 
 @app.on_event("startup")
 async def startup_event():
@@ -59,8 +59,8 @@ async def startup_event():
     logging.info(f"[*]Environment: {env}")
     logging.info(f"[*]Server: http://{display_host}:{port}")
     logging.info(f"[*]Docs: http://{display_host}:{port}/docs")
-    logging.info(f"[*]Admin Login: http://{display_host}:{port}/api/v1/admin/login?key={{YOUR_KEY}}")
-    logging.info(f"[*]Codebase Explorer: http://{display_host}:{port}/api/v1/codebase")
+    logging.info(f"[*]Admin Login: http://{display_host}:{port}{settings.admin_api_prefix}/admin/login?key={{YOUR_KEY}}")
+    logging.info(f"[*]Codebase Explorer: http://{display_host}:{port}{settings.codebase_api_prefix}/codebase")
 
 @app.get("/", tags=["health"])
 @limiter.limit("60/30seconds")

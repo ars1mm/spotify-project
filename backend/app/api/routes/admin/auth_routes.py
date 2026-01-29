@@ -63,7 +63,7 @@ async def get_key_hint():
 @router.get("/current-key")
 async def get_current_key():
     """
-    Returns the current admin key for easy copying.
+    Get the current admin key (for development only).
     WARNING: This should be disabled in production!
     """
     from app.middleware.admin_auth import get_admin_key

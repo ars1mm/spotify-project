@@ -22,7 +22,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, VStack, HStack, Text, Button } from '@chakra-ui/react'
+import { Box, HStack, Text, Button } from '@chakra-ui/react'
 import { FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { ExistingSong } from '@/types/admin'
 import { useDisclosure } from '@chakra-ui/react'
@@ -34,7 +34,6 @@ interface SongManagerProps {
 
 export default function SongManager({ adminToken, onLogout }: SongManagerProps) {
   const [songs, setSongs] = useState<ExistingSong[]>([])
-  const [loading, setLoading] = useState(false)
   const { open, onOpen, onClose } = useDisclosure()
   const [songToDelete, setSongToDelete] = useState<ExistingSong | null>(null)
   const [toastMessage, setToastMessage] = useState<{
@@ -110,7 +109,7 @@ export default function SongManager({ adminToken, onLogout }: SongManagerProps) 
 
   useEffect(() => {
     fetchSongs()
-  }, [adminToken])
+  }, [adminToken, fetchSongs])
 
   return (
     <Box>

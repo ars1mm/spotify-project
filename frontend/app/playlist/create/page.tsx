@@ -212,6 +212,8 @@ export default function CreatePlaylistPage() {
                               <Image
                                 src={song.cover_image_url}
                                 alt={song.title}
+                                width={40}
+                                height={40}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />
                             ) : (

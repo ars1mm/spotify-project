@@ -1,8 +1,24 @@
 import toast from 'react-hot-toast';
 
-export const handleApiError = (error: any, defaultMessage: string) => {
+interface ErrorWithResponse {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+  message?: string;
+}
+
+export const handleApiError = (error: unknown, defaultMessage: string) => {
   console.error(defaultMessage, error);
-  const message = error?.response?.data?.detail || error?.message || defaultMessage;
+  
+  let message = defaultMessage;
+  
+  if (error && typeof error === 'object') {
+    const err = error as ErrorWithResponse;
+    message = err?.response?.data?.detail || err?.message || defaultMessage;
+  }
+  
   toast.error(message);
 };
 

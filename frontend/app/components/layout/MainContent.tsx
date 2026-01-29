@@ -135,7 +135,7 @@ export function MainContent() {
     setSearchLoading(true)
     try {
       const response = await apiRequest(
-        `/api/v1/search?q=${encodeURIComponent(query)}`
+        `/api/v1/songs/search?q=${encodeURIComponent(query)}`
       )
       setSearchResults(response.songs || [])
       setSearchPlaylists(response.playlists || [])

@@ -5,8 +5,8 @@ Provides shared Supabase client initialization and configuration
 for all service modules.
 """
 
-import os
 from supabase import create_client, Client
+from app.core.config import settings
 
 _supabase_client = None
 _supabase_admin_client = None
@@ -16,8 +16,8 @@ def get_supabase_client() -> Client:
     """Get or create Supabase client instance with anon key (for public operations)"""
     global _supabase_client
     if _supabase_client is None:
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_ANON_KEY")
+        url = settings.SUPABASE_URL
+        key = settings.SUPABASE_ANON_KEY
 
         if not url or not key:
             raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
@@ -31,8 +31,8 @@ def get_supabase_admin_client() -> Client:
     """Get or create Supabase admin client instance with service role key (for admin operations)"""
     global _supabase_admin_client
     if _supabase_admin_client is None:
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        url = settings.SUPABASE_URL
+        key = settings.SUPABASE_SERVICE_ROLE_KEY
 
         if not url or not key:
             raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
@@ -46,19 +46,19 @@ class BaseSupabaseClient:
     """Base class for Supabase service clients with common functionality"""
 
     def __init__(self, use_service_role: bool = False):
-        url = os.getenv("SUPABASE_URL")
+        url = settings.SUPABASE_URL
 
         if use_service_role:
-            key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            key = settings.SUPABASE_SERVICE_ROLE_KEY
             if not url or not key:
                 raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
         else:
-            key = os.getenv("SUPABASE_ANON_KEY")
+            key = settings.SUPABASE_ANON_KEY
             if not url or not key:
                 raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
 
         self.supabase: Client = create_client(url, key)
-        self.bucket_name = os.getenv("SUPABASE_BUCKET_NAME", "songs")
+        self.bucket_name = "songs"  # Using hardcoded value from .env
         self.supabase_url = url
 
     def _get_audio_url(self, file_path: str) -> str | None:

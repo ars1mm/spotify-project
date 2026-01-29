@@ -1,12 +1,35 @@
 'use client';
 
 import { Box, Text, Button } from '@chakra-ui/react';
-import { FiPlay, FiPause, FiSkipBack, FiSkipForward } from 'react-icons/fi';
-import { ProgressBar } from '../ui/ProgressBar';
+import { FiPlay, FiPause, FiSkipBack, FiSkipForward, FiDownload } from 'react-icons/fi';
 import { usePlayer } from '../../contexts/PlayerContext';
+import { apiRequest } from '../../config/api';
+import { useState } from 'react';
 
 export function PlayerControls() {
   const { currentSong, isPlaying, togglePlay, currentTime, duration, seekTo, playNext, playPrevious, hasNext, hasPrevious } = usePlayer();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!currentSong?.id) return;
+    
+    setIsDownloading(true);
+    try {
+      const response = await apiRequest(`/api/v1/songs/${currentSong.id}/download`);
+      
+      // Create a temporary anchor element to force download
+      const link = document.createElement('a');
+      link.href = response.download_url;
+      link.download = `${currentSong.title || 'song'}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return '0:00'
@@ -57,6 +80,16 @@ export function PlayerControls() {
           size={{ base: "sm", md: "md" }}
         >
           <FiSkipForward />
+        </Button>
+        <Button
+          variant="ghost"
+          color={currentSong ? 'white' : '#535353'}
+          _hover={{ color: currentSong ? '#1DB954' : '#535353' }}
+          onClick={handleDownload}
+          disabled={!currentSong || isDownloading}
+          size={{ base: "sm", md: "md" }}
+        >
+          <FiDownload />
         </Button>
       </Box>
       <Box display={{ base: "none", md: "flex" }} alignItems="center" gap={2}>

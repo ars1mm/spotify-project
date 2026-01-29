@@ -21,7 +21,7 @@
 
 'use client'
 
-import { Box, VStack, HStack, Text, Button } from '@chakra-ui/react'
+import { Box, HStack, Text, Button } from '@chakra-ui/react'
 
 interface ServerLogsProps {
   logs: string[]
