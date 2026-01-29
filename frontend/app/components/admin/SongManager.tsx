@@ -21,7 +21,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Box, HStack, Text, Button } from '@chakra-ui/react'
 import { FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { ExistingSong } from '@/types/admin'
@@ -47,7 +47,9 @@ export default function SongManager({ adminToken, onLogout }: SongManagerProps) 
       ? 'https://spotify-project-achx.onrender.com'
       : 'http://127.0.0.1:8000')
 
-  const fetchSongs = async () => {
+      // UseCallback to avoid re-creating the function on each render
+      // USAGE: Fetch songs from the server -> Sets the songs state with the fetched data
+  const fetchSongs = useCallback(async () => {
     if (!adminToken) return
 
     try {
@@ -66,9 +68,9 @@ export default function SongManager({ adminToken, onLogout }: SongManagerProps) 
     } catch {
       console.error('Failed to fetch songs')
     }
-  }
+  }, [adminToken, onLogout, API_URL])
 
-  const deleteSong = async (songId: string) => {
+  const deleteSong = useCallback(async (songId: string) => {
     if (!adminToken) return
 
     try {
@@ -92,11 +94,11 @@ export default function SongManager({ adminToken, onLogout }: SongManagerProps) 
       setToastMessage({ type: 'error', text: 'Failed to delete song' })
       setTimeout(() => setToastMessage(null), 3000)
     }
-  }
+  }, [adminToken, onLogout, API_URL, fetchSongs]) 
 
   const handleDeleteClick = (song: ExistingSong) => {
     setSongToDelete(song)
-    onOpen()
+    onOpen()  
   }
 
   const confirmDelete = () => {
