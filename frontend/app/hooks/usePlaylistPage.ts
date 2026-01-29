@@ -1,3 +1,25 @@
+/*
+ * USE PLAYLIST PAGE HOOK - HOOK PËR FAQEN E PLAYLIST-IT
+ * 
+ * Custom hook për menaxhimin e të gjitha funksionaliteteve të faqes së playlist-it.
+ * Përmban logjikën për CRUD operacionet dhe menaxhimin e këngëve.
+ * 
+ * Funksionalitetet kryesore:
+ * - Ngarkimi i detajeve të playlist-it
+ * - Menaxhimi i këngëve (shtim/heqje)
+ * - Përditësimi i playlist-it
+ * - Fshirja e playlist-it
+ * - Ngarkimi i të gjitha këngëve për shtim
+ * 
+ * State management:
+ * - playlist: Të dhënat e playlist-it
+ * - songs: Këngët e playlist-it
+ * - allSongs: Të gjitha këngët e disponueshme
+ * - loading: Statusi i ngarkimit
+ * 
+ * Permissions:
+ * - Kontrollon nëse përdoruesi është pronari i playlist-it
+ */
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -5,6 +27,16 @@ import { authStorage } from '../lib/auth';
 import { playlistApi, songApi } from '../lib/api';
 import { Song, Playlist } from '../types';
 
+/*
+ * MAIN HOOK FUNCTION - FUNKSIONI KRYESOR I HOOK-UT
+ * 
+ * Implementon të gjithë logjikën e faqes së playlist-it:
+ * - State management për playlist dhe këngë
+ * - CRUD operacionet për playlist
+ * - Menaxhimi i këngëve (add/remove)
+ * - Permission checking
+ * - Error handling me toast notifications
+ */
 export function usePlaylistPage() {
   const params = useParams();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);

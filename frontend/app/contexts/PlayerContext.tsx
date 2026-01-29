@@ -1,9 +1,37 @@
+/*
+ * PLAYER CONTEXT - KONTEKSTI I PLAYER-IT
+ * 
+ * Ky komponent menaxhon gjendjen globale të player-it të muzikës në aplikacion.
+ * Përdor React Context për të ndarë gjendjen midis komponenteve të ndryshme.
+ * 
+ * Funksionalitetet kryesore:
+ * - Luajtja/ndalja e muzikës
+ * - Menaxhimi i vollëmit
+ * - Navigimi midis këngëve (next/previous)
+ * - Ruajtja e historisë së këngëve
+ * - Integrimi me Media Session API
+ * - Persistenca e të dhënave në localStorage
+ * 
+ * Raste përdorimi:
+ * - Kontrollimi i player-it nga çdo komponent
+ * - Ruajtja e këngës së fundit të dëgjuar
+ * - Menaxhimi i playlist-eve dhe historisë
+ */
 'use client'
 
 import { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Song } from '../types'
 
+/*
+ * PLAYER CONTEXT TYPE - TIPI I KONTEKSTIT
+ * 
+ * Përcakton të gjitha pronat dhe metodat që ofron konteksti:
+ * - Gjendja aktuale (kënga, luajtja, koha, vollëmi)
+ * - Metodat e kontrollit (play, pause, seek, volume)
+ * - Navigimi (next, previous)
+ * - Referencat (audioRef për HTML audio element)
+ */
 interface PlayerContextType {
   currentSong: Song | null
   isPlaying: boolean
@@ -24,7 +52,31 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
 
+/*
+ * PLAYER PROVIDER - OFRUES I KONTEKSTIT
+ * 
+ * Komponenti kryesor që menaxhon gjendjen e player-it dhe e ofron atë
+ * për të gjitha komponentet e tjera.
+ * 
+ * Karakteristikat:
+ * - Menaxhon gjendjen lokale të player-it
+ * - Ruan të dhënat në localStorage për persistencë
+ * - Integrohet me Media Session API për kontroll nga sistemi
+ * - Menaxhon event listener-at e audio element-it
+ * - Ofron error handling për probleme me audio
+ */
 export function PlayerProvider({ children }: { children: ReactNode }) {
+  /*
+   * STATE MANAGEMENT - MENAXHIMI I GJENDJES
+   * 
+   * Të gjitha state-et e nevojshme për player-in:
+   * - currentSong: Kënga aktuale (me persistencë në localStorage)
+   * - isPlaying: Statusi i luajtjes
+   * - currentTime/duration: Koha aktuale dhe totale
+   * - volume: Vollëmi (0-1)
+   * - songHistory: Historia e këngëve të luajtura
+   * - currentIndex: Indeksi aktual në histori
+   */
   const [currentSong, setCurrentSong] = useState<Song | null>(() => {
     try {
       const stored = localStorage.getItem('lastSongListened')
@@ -90,6 +142,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
 
 
+  /*
+   * PLAY SONG FUNCTION - FUNKSIONI I LUAJTJES
+   * 
+   * Funksioni kryesor për luajtjen e një kënge të re:
+   * - Kontrollon ekzistencën e audio URL
+   * - Shton këngën në histori
+   * - Ruan në localStorage për këngët e fundit
+   * - Përditëson gjendjen e player-it
+   * 
+   * Error handling:
+   * - Kontrollon për audio_url të vlefshem
+   * - Menaxhon gabimet e localStorage
+   */
   const playSong = useCallback((song: Song) => {
     console.log('Playing song:', song)
     console.log('Audio URL:', song.audio_url)
@@ -259,6 +324,20 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   )
 }
 
+/*
+ * USE PLAYER HOOK - HOOK PËR PËRDORIMIN E PLAYER-IT
+ * 
+ * Custom hook që lejon komponentet e tjera të aksesojnë kontekstin.
+ * Përmban validim për të siguruar që përdoret brenda PlayerProvider.
+ * 
+ * Raste përdorimi:
+ * - Në komponentet e player controls
+ * - Në song items për play button
+ * - Në çdo komponent që ka nevojë për player state
+ * 
+ * Error handling:
+ * - Hedh error nëse përdoret jashtë provider-it
+ */
 export function usePlayer() {
   const context = useContext(PlayerContext)
   if (context === undefined) {

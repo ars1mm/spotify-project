@@ -8,7 +8,9 @@ load_dotenv(dotenv_path=env_path)
 
 class Settings:
     PROJECT_NAME: str = "Spotify Backend"
+    # Not Configured
     RAPIDAPI_KEY: str = os.getenv("RAPIDAPI_KEY", "")
+    # Not Configured
     RAPIDAPI_HOST: str = os.getenv("RAPIDAPI_HOST", "spotify-scraper.p.rapidapi.com")
     
     # Supabase Configuration

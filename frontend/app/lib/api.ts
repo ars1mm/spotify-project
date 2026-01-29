@@ -1,6 +1,32 @@
+/*
+ * API FUNCTIONS - PLAYLIST DHE SONG MANAGEMENT
+ * 
+ * Ky skedar përmban të gjitha funksionet për komunikim me backend API.
+ * Përdor apiRequest për të bërë thirrje HTTP dhe menaxhon të dhënat.
+ * 
+ * Komponentët kryesorë:
+ * - playlistApi: Operacionet CRUD për playlist-et
+ * - songApi: Operacionet për këngët dhe kërkimin
+ * 
+ * Raste përdorimi:
+ * - Krijimi, leximi, përditësimi dhe fshirja e playlist-eve
+ * - Kërkimi dhe menaxhimi i këngëve
+ * - Shtimi/heqja e këngëve nga playlist-et
+ */
 import { apiRequest } from '../config/api';
 // import { Playlist, Song } from '../types';
 
+/*
+ * PLAYLIST API - MENAXHIMI I PLAYLIST-EVE
+ * 
+ * Përmban të gjitha operacionet për playlist-et:
+ * - getAll: Merr të gjitha playlist-et (me opsion filtrimi për përdorues)
+ * - getById: Merr një playlist specifik
+ * - create: Krijon playlist të ri
+ * - update: Përditëson playlist ekzistues
+ * - delete: Fshin playlist
+ * - addSong/removeSong: Menaxhon këngët në playlist
+ */
 export const playlistApi = {
   getAll: (userId?: string) => 
     apiRequest(`/api/v1/playlists${userId ? `?user_id=${userId}` : ''}`),
@@ -24,6 +50,20 @@ export const playlistApi = {
     apiRequest(`/api/v1/playlists/${playlistId}/songs/${songId}`, { method: 'DELETE' })
 };
 
+/*
+ * SONG API - MENAXHIMI I KËNGËVE
+ * 
+ * Përmban operacionet për këngët:
+ * - getAll: Merr të gjitha këngët me paginacion
+ * - search: Kërkon këngë sipas query-it
+ * - getLiked: Merr këngët e pëlqyera të përdoruesit
+ * - like/unlike: Menaxhon pëlqimet e këngëve
+ * 
+ * Karakteristika:
+ * - Mbështetje për paginacion
+ * - Kërkimi me encoding të sigurt të URL-ve
+ * - Menaxhimi i pëlqimeve për përdorues
+ */
 export const songApi = {
   getAll: (page = 1, limit = 50) => 
     apiRequest(`/api/v1/songs?page=${page}&limit=${limit}`),

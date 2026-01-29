@@ -1,10 +1,45 @@
+/*
+ * API CONFIGURATION - KONFIGURIMI I API-VE
+ * 
+ * Skedari kryesor për konfigurimin e komunikimit me backend API.
+ * Përmban URL-të, endpoint-et dhe funksionin universal për kërkesat.
+ * 
+ * Komponentët kryesorë:
+ * - API_BASE_URL: URL bazike e server-it
+ * - apiConfig: Konfigurimi i endpoint-eve
+ * - apiRequest: Funksioni universal për kërkesat HTTP
+ * 
+ * Karakteristika:
+ * - Cache integration për performancë
+ * - Automatic authentication headers
+ * - Error handling i detajuar
+ * - Environment-based URL selection
+ */
 import { cache } from '../lib/cache';
 
+/*
+ * API BASE URL - URL BAZIKE E API-VE
+ * 
+ * Përcakton URL-në bazike të server-it sipas environment-it:
+ * - Production: Render.com hosted URL
+ * - Development: Local server (127.0.0.1:8000)
+ * - Mund të mbishkruhet me NEXT_PUBLIC_API_URL
+ */
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' 
     ? 'https://spotify-project-achx.onrender.com' 
     : 'http://127.0.0.1:8000');
 
+/*
+ * API CONFIG - KONFIGURIMI I ENDPOINT-EVE
+ * 
+ * Objekt që përmban të gjitha endpoint-et e API-ve.
+ * Lehtëson menaxhimin dhe përditësimin e URL-ve.
+ * 
+ * Struktura:
+ * - baseURL: URL bazike
+ * - endpoints: Lista e endpoint-eve të disponueshme
+ */
 export const apiConfig = {
   baseURL: API_BASE_URL,
   endpoints: {
@@ -13,6 +48,31 @@ export const apiConfig = {
   },
 };
 
+/*
+ * API REQUEST FUNCTION - FUNKSIONI UNIVERSAL I KËRKESAVE
+ * 
+ * Funksioni kryesor për të gjitha kërkesat HTTP në aplikacion.
+ * Ofron funksionalitete të avancuara për komunikimin me API.
+ * 
+ * Karakteristikat kryesore:
+ * - Cache integration: Ruan përgjigjet GET në cache
+ * - Authentication: Shton automatikisht Bearer token
+ * - Error handling: Menaxhon gabimet dhe i konverton në mesazhe
+ * - Content-Type: Përcakton automatikisht JSON headers
+ * 
+ * Parametrat:
+ * - endpoint: Rruga relative e API-s
+ * - options: Opsionet e fetch (method, body, headers, etj.)
+ * 
+ * Cache behavior:
+ * - GET requests: Kontrollon cache para thirrjes
+ * - POST/PUT/DELETE: Nuk përdor cache
+ * 
+ * Authentication:
+ * - Merr token nga localStorage
+ * - Shton Authorization header automatikisht
+ * - Menaxhon rastet kur nuk ka token
+ */
 export async function apiRequest(endpoint: string, options?: RequestInit) {
   const url = `${API_BASE_URL}${endpoint}`;
   
