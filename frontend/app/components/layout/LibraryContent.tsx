@@ -357,7 +357,7 @@ export function LibraryContent() {
               gap={4}
               w="full"
             >
-              {playlists.map((playlist) => (
+              {playlists.slice(0, 8).map((playlist) => (
                 <Box
                   key={playlist.id}
                   bg="#181818"

@@ -1,3 +1,5 @@
+import { cache } from '../lib/cache';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' 
     ? 'https://spotify-project-achx.onrender.com' 
@@ -13,6 +15,14 @@ export const apiConfig = {
 
 export async function apiRequest(endpoint: string, options?: RequestInit) {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Check cache for GET requests
+  if (!options?.method || options.method === 'GET') {
+    const cached = cache.get(url);
+    if (cached) {
+      return cached;
+    }
+  }
   
   // Get token from authStorage
   let authHeader = {};
@@ -51,7 +61,14 @@ export async function apiRequest(endpoint: string, options?: RequestInit) {
       throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Cache GET responses
+    if (!options?.method || options.method === 'GET') {
+      cache.set(url, data);
+    }
+    
+    return data;
   } catch (error) {
     console.error('API Request failed:', error);
     throw error;
